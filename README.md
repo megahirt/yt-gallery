@@ -49,6 +49,28 @@ npm run preview
 npm run check
 ```
 
+## Fetching Video Data Locally
+
+To update `static/videos.json` from your YouTube channel:
+
+```bash
+YOUTUBE_API_KEY=your_api_key YOUTUBE_CHANNEL_ID=your_channel_id node scripts/fetch-videos.js
+```
+
+Or export the environment variables first:
+
+```bash
+export YOUTUBE_API_KEY=your_api_key
+export YOUTUBE_CHANNEL_ID=your_channel_id
+node scripts/fetch-videos.js
+```
+
+The script will:
+1. Fetch all videos from the channel's uploads playlist
+2. Filter for unlisted videos only
+3. Map videos to their playlists
+4. Write the result to `static/videos.json`
+
 ## Deployment
 
 The site deploys automatically to GitHub Pages on push to `main`.
