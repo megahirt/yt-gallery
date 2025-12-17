@@ -14,7 +14,7 @@ A private, family-friendly video gallery for unlisted YouTube videos. Built with
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 24+
 - npm
 
 ### Install dependencies
