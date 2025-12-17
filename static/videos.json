@@ -1,0 +1,65 @@
+{
+  "videos": [
+    {
+      "id": "dQw4w9WgXcQ",
+      "title": "Summer Vacation 2024",
+      "description": "Our family trip to the beach. So much fun in the sun!",
+      "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "publishedAt": "2024-07-15T14:30:00Z",
+      "playlist": "Vacations",
+      "duration": "PT5M32S",
+      "tags": ["vacation", "beach", "summer", "2024"]
+    },
+    {
+      "id": "abc123xyz",
+      "title": "Birthday Party - Emma turns 7",
+      "description": "Emma's 7th birthday celebration with friends and family.",
+      "thumbnail": "https://i.ytimg.com/vi/abc123xyz/hqdefault.jpg",
+      "publishedAt": "2024-03-22T18:00:00Z",
+      "playlist": "Birthdays",
+      "duration": "PT12M45S",
+      "tags": ["birthday", "emma", "party", "2024"]
+    },
+    {
+      "id": "def456uvw",
+      "title": "Christmas Morning 2023",
+      "description": "Opening presents on Christmas morning. The kids were so excited!",
+      "thumbnail": "https://i.ytimg.com/vi/def456uvw/hqdefault.jpg",
+      "publishedAt": "2023-12-25T09:00:00Z",
+      "playlist": "Holidays",
+      "duration": "PT8M15S",
+      "tags": ["christmas", "holidays", "presents", "2023"]
+    },
+    {
+      "id": "ghi789rst",
+      "title": "First Day of School",
+      "description": "The kids heading off to their first day of the new school year.",
+      "thumbnail": "https://i.ytimg.com/vi/ghi789rst/hqdefault.jpg",
+      "publishedAt": "2024-09-03T07:30:00Z",
+      "playlist": "School",
+      "duration": "PT3M20S",
+      "tags": ["school", "first day", "2024"]
+    },
+    {
+      "id": "jkl012mno",
+      "title": "Backyard Camping Adventure",
+      "description": "Setting up the tent and roasting marshmallows in our backyard.",
+      "thumbnail": "https://i.ytimg.com/vi/jkl012mno/hqdefault.jpg",
+      "publishedAt": "2024-06-08T20:00:00Z",
+      "playlist": null,
+      "duration": "PT15M10S",
+      "tags": ["camping", "backyard", "marshmallows", "adventure"]
+    },
+    {
+      "id": "pqr345stu",
+      "title": "Thanksgiving Dinner 2023",
+      "description": "The whole family gathered for Thanksgiving dinner.",
+      "thumbnail": "https://i.ytimg.com/vi/pqr345stu/hqdefault.jpg",
+      "publishedAt": "2023-11-23T17:00:00Z",
+      "playlist": "Holidays",
+      "duration": "PT6M55S",
+      "tags": ["thanksgiving", "holidays", "family", "dinner", "2023"]
+    }
+  ],
+  "lastUpdated": "2024-12-17T12:00:00Z"
+}
