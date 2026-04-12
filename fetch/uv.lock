@@ -361,7 +361,7 @@ wheels = [
 ]
 
 [[package]]
-name = "yt-api-experiment"
+name = "yt-gallery"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
