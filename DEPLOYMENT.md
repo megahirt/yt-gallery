@@ -39,11 +39,7 @@ The site won't show any videos until the fetch workflow has produced a `videos-j
 
 ### 3. Access the site
 
-After the deploy workflow completes, the site is available at:
-
-**https://megahirt.github.io/yt-gallery/**
-
-To use a custom domain (e.g. `videos.hirtfamily.net`), configure it in **Settings → Pages → Custom domain**.
+To use a custom domain (e.g. `yourdomain.com`), configure it in **Settings → Pages → Custom domain**.
 
 ---
 

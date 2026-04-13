@@ -13,7 +13,7 @@ jobs:
         working-directory: fetch
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: astral-sh/setup-uv@v5
 
@@ -31,7 +31,7 @@ jobs:
         run: uv run make_simple_video_list.py
 
       - name: Upload videos.json as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: videos-json
           path: fetch/videos.json
