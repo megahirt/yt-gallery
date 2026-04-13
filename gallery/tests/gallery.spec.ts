@@ -42,7 +42,7 @@ test.describe('Gallery page — video display', () => {
 	test('shows the site name in the sidebar', async ({ page }) => {
 		await mockVideos(page);
 		await page.goto('/');
-		await expect(page.getByText('Hirt Family Gallery')).toBeVisible();
+		await expect(page.getByRole('complementary').getByText('Hirt Family Gallery')).toBeVisible();
 	});
 
 	test('displays a video card for each video', async ({ page }) => {
