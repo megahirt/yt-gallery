@@ -5,6 +5,9 @@ on:
   schedule:
     - cron: "0 4 * * *" # daily at 04:00 UTC — adjust or remove as needed
 
+permissions:
+  contents: write # needed to create/delete releases and tags
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
@@ -35,3 +38,59 @@ jobs:
         with:
           name: videos-json
           path: fetch/videos.json
+
+      - name: Delete existing rolling release and tag (videos)
+        # Idempotent cleanup: if release/tag does not exist yet, continue without failing.
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const tag = 'videos';
+
+            // Delete release by tag if it exists.
+            try {
+              const release = await github.rest.repos.getReleaseByTag({ owner, repo, tag });
+              await github.rest.repos.deleteRelease({
+                owner,
+                repo,
+                release_id: release.data.id
+              });
+              core.info(`Deleted existing release for tag ${tag}`);
+            } catch (error) {
+              if (error.status === 404) {
+                core.info(`No existing release found for tag ${tag}`);
+              } else {
+                throw error;
+              }
+            }
+
+            // Delete tag ref if it exists.
+            try {
+              await github.rest.git.deleteRef({
+                owner,
+                repo,
+                ref: `tags/${tag}`
+              });
+              core.info(`Deleted existing tag ${tag}`);
+            } catch (error) {
+              if (error.status === 422 || error.status === 404) {
+                core.info(`No existing tag found for ${tag}`);
+              } else {
+                throw error;
+              }
+            }
+
+      - name: Publish rolling release (videos) with videos.json
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: videos
+          name: Rolling videos.json build
+          body: |
+            Auto-published by fetch-videos workflow.
+            Contains videos.json as a direct release asset.
+          files: fetch/videos.json
+          make_latest: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
