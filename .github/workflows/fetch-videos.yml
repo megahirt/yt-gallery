@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v8.0.0
 
       - name: Write credentials from secrets
         # Single quotes around the secret prevent the shell from interpreting
