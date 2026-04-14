@@ -10,4 +10,12 @@ declare global {
 	}
 }
 
+interface ImportMetaEnv {
+	readonly VITE_PUBLISHED_VIDEOS_URL?: string;
+}
+
+interface ImportMeta {
+	readonly env: ImportMetaEnv;
+}
+
 export {};

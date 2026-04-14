@@ -53,9 +53,10 @@ jobs:
         working-directory: gallery
         env:
           BASE_PATH: /yt-gallery
+          VITE_PUBLISHED_VIDEOS_URL: ${{ vars.PUBLISHED_VIDEOS_URL }}
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: gallery/build
 

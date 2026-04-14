@@ -1,7 +1,7 @@
 import type { Video } from '$lib/types';
 import { base } from '$app/paths';
 
-const PUBLISHED_VIDEOS_URL = import.meta.env.PUBLISHED_VIDEOS_URL as string | undefined;
+const PUBLISHED_VIDEOS_URL = import.meta.env.VITE_PUBLISHED_VIDEOS_URL as string | undefined;
 
 function toVideoKey(videos: Video[]): string {
 	return videos.map((v) => `${v.id}:${v.uploadDate}:${v.videoDate ?? ''}`).join('|');
