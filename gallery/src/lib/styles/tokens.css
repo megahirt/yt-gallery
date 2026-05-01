@@ -1,0 +1,42 @@
+:root {
+  /* Colors */
+  --color-bg:          #F5F3EF;
+  --color-surface:     #EAE6DF;
+  --color-surface-alt: #DDD8D0;
+  --color-text:        #2F2A26;
+  --color-text-soft:   #6B645E;
+  --color-accent:      #A67C52;
+  --color-accent-soft: #BFAFA0;
+  --color-border:      #D6D0C8;
+
+  /* Typography */
+  --font-heading: "Playfair Display", serif;
+  --font-body:    "Inter", system-ui, sans-serif;
+
+  --text-h1:    2.25rem;  /* 36px */
+  --text-h2:    1.75rem;  /* 28px */
+  --text-h3:    1.375rem; /* 22px */
+  --text-body:  1rem;     /* 16px */
+  --text-small: 0.8125rem; /* 13px */
+
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+
+  /* Surfaces */
+  --radius:      12px;
+  --radius-sm:   8px;
+  --shadow-soft: 0 2px 6px rgba(0, 0, 0, 0.05);
+  --shadow-lift: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* Motion */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+}

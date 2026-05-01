@@ -13,9 +13,7 @@
 	const store = getContext<VideoStore>('videoStore');
 
 	const videoId = $derived(page.params.id);
-
 	const video = $derived(store.videos.find((v) => v.id === videoId) ?? null);
-
 	const thumbnail = $derived(video ? (video.thumbnails.standard ?? video.thumbnails.high) : null);
 
 	const uploadDate = $derived(
@@ -56,39 +54,22 @@
 	<title>{video?.title ?? 'Video'} — Hirt Family Gallery</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-100">
+<div class="page-shell">
 	<!-- Top bar -->
-	<div class="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-3">
-		<div class="mx-auto flex max-w-4xl items-center justify-between">
-			<a
-				href="/"
-				class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-sky-600"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-4 w-4"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M15 19l-7-7 7-7"
-					/>
+	<div class="topbar">
+		<div class="topbar-inner">
+			<a href="/" class="back-link">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 				</svg>
 				Back to Gallery
 			</a>
+
 			{#if video}
-				<div class="flex items-center gap-2">
-					<button
-						onclick={copyLink}
-						class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
-						title="Copy link"
-					>
+				<div class="actions">
+					<button onclick={copyLink} class="action-btn" title="Copy link">
 						{#if copied}
-							<svg class="h-4 w-4 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg class="h-4 w-4 icon-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
 							</svg>
 							Copied!
@@ -104,12 +85,10 @@
 						href="https://www.youtube.com/watch?v={video.id}"
 						target="_blank"
 						rel="noopener noreferrer"
-						class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+						class="action-btn"
 					>
-						<svg class="h-4 w-4 text-red-500" viewBox="0 0 24 24" fill="currentColor">
-							<path
-								d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"
-							/>
+						<svg class="h-4 w-4 icon-yt" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
 						</svg>
 						Watch on YouTube
 					</a>
@@ -119,14 +98,14 @@
 	</div>
 
 	<!-- Content -->
-	<div class="mx-auto max-w-4xl px-4 py-6">
+	<div class="content">
 		{#if store.loading}
-			<p class="text-center text-gray-500">Loading...</p>
+			<p class="state-msg">Loading...</p>
 		{:else if !video}
-			<p class="text-center text-gray-500">Video not found.</p>
+			<p class="state-msg">Video not found.</p>
 		{:else}
-			<!-- Video player -->
-			<div class="overflow-hidden rounded-xl bg-black shadow-lg">
+			<!-- Player -->
+			<div class="player-wrap">
 				{#if playing}
 					<iframe
 						src="https://www.youtube-nocookie.com/embed/{video.id}?autoplay=1"
@@ -138,30 +117,17 @@
 				{:else}
 					<button
 						onclick={() => (playing = true)}
-						class="group relative block w-full"
+						class="play-button group relative block w-full"
 						aria-label="Play {video.title}"
 					>
 						{#if thumbnail}
-							<img
-								src={thumbnail.url}
-								alt={video.title}
-								class="aspect-video w-full object-cover"
-							/>
+							<img src={thumbnail.url} alt={video.title} class="aspect-video w-full object-cover" />
 						{:else}
-							<div class="aspect-video w-full bg-gray-800"></div>
+							<div class="aspect-video w-full" style="background: var(--color-surface-alt);"></div>
 						{/if}
-						<!-- Play overlay -->
-						<div
-							class="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors group-hover:bg-black/30"
-						>
-							<div
-								class="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-lg transition-transform group-hover:scale-105"
-							>
-								<svg
-									class="ml-1 h-7 w-7 text-gray-800"
-									fill="currentColor"
-									viewBox="0 0 24 24"
-								>
+						<div class="play-overlay">
+							<div class="play-circle">
+								<svg class="ml-1 h-7 w-7" fill="currentColor" viewBox="0 0 24 24" style="color: var(--color-text);">
 									<path d="M8 5v14l11-7z" />
 								</svg>
 							</div>
@@ -171,45 +137,222 @@
 			</div>
 
 			<!-- Metadata -->
-			<div class="mt-4 rounded-xl bg-white p-6 shadow-sm">
-				<h1 class="text-2xl font-bold text-gray-900">{video.title}</h1>
+			<div class="meta-card">
+				<h1 class="video-title">{video.title}</h1>
 
-				<div class="mt-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-500">
-					<span>📅 Uploaded: {uploadDate}</span>
+				<div class="meta-row">
+					<span>Uploaded {uploadDate}</span>
 					{#if videoDateFormatted}
-						<span>🕐 Filmed: {videoDateFormatted}</span>
+						<span>·</span>
+						<span>Filmed {videoDateFormatted}</span>
 					{/if}
-					<span>👁 {viewCount} views</span>
+					<span>·</span>
+					<span>{viewCount} views</span>
 				</div>
 
-				<!-- Collections + tags -->
 				{#if video.playlists.length > 0 || video.tags.length > 0}
-					<div class="mt-4 flex flex-wrap gap-2">
+					<div class="tags-row">
 						{#each video.playlists as playlist (playlist.id)}
-							<span
-								class="rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-700"
-							>
-								{playlist.title}
-							</span>
+							<span class="tag tag-accent">{playlist.title}</span>
 						{/each}
 						{#each video.tags as tag (tag)}
-							<span class="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
-								#{tag}
-							</span>
+							<span class="tag">#{tag}</span>
 						{/each}
 					</div>
 				{/if}
 
-				<!-- Description -->
 				{#if video.description}
-					<div class="mt-5 border-t border-gray-100 pt-4">
-						<h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-400">
-							Description
-						</h2>
-						<p class="whitespace-pre-wrap text-sm text-gray-700">{video.description}</p>
+					<div class="description">
+						<p class="description-label">Description</p>
+						<p class="description-text">{video.description}</p>
 					</div>
 				{/if}
 			</div>
 		{/if}
 	</div>
 </div>
+
+<style>
+	.page-shell {
+		min-height: 100vh;
+		background: var(--color-bg);
+	}
+
+	.topbar {
+		position: sticky;
+		top: 0;
+		z-index: 10;
+		background: var(--color-surface);
+		border-bottom: 1px solid var(--color-border);
+		padding: 12px 16px;
+	}
+
+	.topbar-inner {
+		max-width: 56rem;
+		margin: 0 auto;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.back-link {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-size: var(--text-small);
+		font-weight: 500;
+		color: var(--color-text-soft);
+		text-decoration: none;
+		transition: color var(--transition-fast);
+	}
+	.back-link:hover { color: var(--color-accent); }
+
+	.actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.action-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		padding: 6px 12px;
+		font-size: var(--text-small);
+		color: var(--color-text-soft);
+		background: transparent;
+		cursor: pointer;
+		text-decoration: none;
+		transition: background var(--transition-fast), color var(--transition-fast);
+	}
+	.action-btn:hover {
+		background: var(--color-surface-alt);
+		color: var(--color-text);
+	}
+
+	.icon-success { color: #6B8F6B; }
+	.icon-yt { color: #c0392b; }
+
+	.content {
+		max-width: 56rem;
+		margin: 0 auto;
+		padding: 24px 16px;
+	}
+
+	.state-msg {
+		text-align: center;
+		margin-top: 32px;
+		color: var(--color-text-soft);
+	}
+
+	.player-wrap {
+		border-radius: var(--radius);
+		overflow: hidden;
+		background: #1a1614;
+		box-shadow: var(--shadow-lift);
+	}
+
+	.play-button {
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+	}
+
+	.play-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(47, 42, 38, 0.2);
+		transition: background var(--transition-base);
+	}
+	.play-button:hover .play-overlay {
+		background: rgba(47, 42, 38, 0.32);
+	}
+
+	.play-circle {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 64px;
+		height: 64px;
+		border-radius: 50%;
+		background: rgba(245, 243, 239, 0.92);
+		box-shadow: var(--shadow-lift);
+		transition: transform var(--transition-base);
+	}
+	.play-button:hover .play-circle {
+		transform: scale(1.06);
+	}
+
+	.meta-card {
+		margin-top: 16px;
+		background: var(--color-surface);
+		border-radius: var(--radius);
+		box-shadow: var(--shadow-soft);
+		padding: 24px;
+	}
+
+	.video-title {
+		font-family: var(--font-heading);
+		font-size: var(--text-h2);
+		font-weight: 700;
+		color: var(--color-text);
+		line-height: 1.25;
+		letter-spacing: 0.01em;
+	}
+
+	.meta-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-top: 10px;
+		font-size: var(--text-small);
+		color: var(--color-text-soft);
+	}
+
+	.tags-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-top: 16px;
+	}
+
+	.tag {
+		display: inline-block;
+		background: var(--color-surface-alt);
+		color: var(--color-text-soft);
+		border-radius: 999px;
+		padding: 3px 12px;
+		font-size: var(--text-small);
+	}
+	.tag-accent {
+		background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+		color: var(--color-accent);
+	}
+
+	.description {
+		margin-top: 20px;
+		padding-top: 16px;
+		border-top: 1px solid var(--color-border);
+	}
+
+	.description-label {
+		font-size: var(--text-small);
+		font-weight: 600;
+		color: var(--color-text-soft);
+		margin-bottom: 8px;
+		letter-spacing: 0.02em;
+	}
+
+	.description-text {
+		font-size: var(--text-small);
+		color: var(--color-text);
+		white-space: pre-wrap;
+		line-height: var(--leading-relaxed);
+	}
+</style>

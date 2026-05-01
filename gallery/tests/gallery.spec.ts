@@ -89,7 +89,7 @@ test.describe('Gallery page — video display', () => {
 
 		// vacationVid1 has viewCount: "42"
 		const vacationCard = page.locator('.grid [role="button"]', { hasText: 'Family Vacation 2023' });
-		await expect(vacationCard.getByText('👁 42')).toBeVisible();
+		await expect(vacationCard.getByText('42 views')).toBeVisible();
 	});
 
 	test('does not show tag chips on cards with no tags', async ({ page }) => {

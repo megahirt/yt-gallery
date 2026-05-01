@@ -52,7 +52,6 @@
 		syncUrl();
 	});
 
-	// Derived: unique collections from all videos
 	const collections = $derived.by<PlaylistRef[]>(() => {
 		const map = new Map<string, PlaylistRef>();
 		for (const video of store.videos) {
@@ -63,7 +62,6 @@
 		return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title));
 	});
 
-	// Derived: count per collection title
 	const videoCounts = $derived.by<Map<string, number>>(() => {
 		const counts = new Map<string, number>();
 		for (const video of store.videos) {
@@ -74,7 +72,6 @@
 		return counts;
 	});
 
-	// Derived: filtered and sorted videos
 	const filteredVideos = $derived.by<Video[]>(() => {
 		let result = store.videos;
 
@@ -112,7 +109,6 @@
 
 	type YearGroup = { year: number; videos: Video[] };
 
-	// Derived: videos grouped by year (null when sorting by title)
 	const videoGroups = $derived.by<YearGroup[] | null>(() => {
 		if (sortBy === 'title') return null;
 
@@ -143,11 +139,12 @@
 	<title>Hirt Family Gallery</title>
 </svelte:head>
 
-<div class="flex h-screen bg-gray-100">
+<div class="flex h-screen" style="background: var(--color-bg);">
 	<!-- Mobile sidebar backdrop -->
 	{#if sidebarOpen}
 		<div
-			class="fixed inset-0 z-20 bg-black/30 lg:hidden"
+			class="fixed inset-0 z-20 lg:hidden"
+			style="background: rgba(47,42,38,0.4);"
 			role="presentation"
 			onclick={() => (sidebarOpen = false)}
 		></div>
@@ -171,30 +168,20 @@
 	<!-- Main content -->
 	<div class="flex min-w-0 flex-1 flex-col overflow-hidden">
 		<!-- Top bar -->
-		<div class="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3">
+		<div class="topbar flex items-center gap-3 px-4 py-3">
 			<!-- Hamburger (mobile) -->
 			<button
-				class="rounded-lg p-1.5 text-gray-600 hover:bg-gray-100 lg:hidden"
+				class="rounded-lg p-1.5 lg:hidden"
+				style="color: var(--color-text-soft);"
 				onclick={() => (sidebarOpen = !sidebarOpen)}
 				aria-label="Toggle sidebar"
 			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M4 6h16M4 12h16M4 18h16"
-					/>
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
 				</svg>
 			</button>
 
-			<h1 class="shrink-0 text-base font-semibold text-gray-900">{pageTitle}</h1>
+			<span class="shrink-0 text-base font-semibold" style="font-family: var(--font-heading); color: var(--color-text);">{pageTitle}</span>
 
 			<!-- Search -->
 			<div class="min-w-0 flex-1">
@@ -202,69 +189,50 @@
 			</div>
 
 			<!-- Density toggle -->
-			<div class="flex shrink-0 items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
-				<button
-					onclick={() => (density = 'large')}
-					class="rounded p-1.5 {density === 'large'
-						? 'bg-white text-sky-600 shadow-sm'
-						: 'text-gray-400 hover:text-gray-600'}"
-					title="Large grid"
-				>
-					<svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
-						<rect x="1" y="1" width="6" height="6" rx="1" />
-						<rect x="9" y="1" width="6" height="6" rx="1" />
-						<rect x="1" y="9" width="6" height="6" rx="1" />
-						<rect x="9" y="9" width="6" height="6" rx="1" />
-					</svg>
-				</button>
-				<button
-					onclick={() => (density = 'medium')}
-					class="rounded p-1.5 {density === 'medium'
-						? 'bg-white text-sky-600 shadow-sm'
-						: 'text-gray-400 hover:text-gray-600'}"
-					title="Medium grid"
-				>
-					<svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
-						<rect x="1" y="1" width="4" height="4" rx="0.5" />
-						<rect x="6" y="1" width="4" height="4" rx="0.5" />
-						<rect x="11" y="1" width="4" height="4" rx="0.5" />
-						<rect x="1" y="6" width="4" height="4" rx="0.5" />
-						<rect x="6" y="6" width="4" height="4" rx="0.5" />
-						<rect x="11" y="6" width="4" height="4" rx="0.5" />
-						<rect x="1" y="11" width="4" height="4" rx="0.5" />
-						<rect x="6" y="11" width="4" height="4" rx="0.5" />
-						<rect x="11" y="11" width="4" height="4" rx="0.5" />
-					</svg>
-				</button>
-				<button
-					onclick={() => (density = 'list')}
-					class="rounded p-1.5 {density === 'list'
-						? 'bg-white text-sky-600 shadow-sm'
-						: 'text-gray-400 hover:text-gray-600'}"
-					title="List view"
-				>
-					<svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
-						<rect x="1" y="1" width="14" height="3" rx="1" />
-						<rect x="1" y="6" width="14" height="3" rx="1" />
-						<rect x="1" y="11" width="14" height="3" rx="1" />
-					</svg>
-				</button>
+			<div class="flex shrink-0 items-center gap-1 rounded-lg p-1" style="border: 1px solid var(--color-border); background: var(--color-bg);">
+				{#each (['large', 'medium', 'list'] as const) as d}
+					<button
+						onclick={() => (density = d)}
+						class="rounded p-1.5 transition-colors"
+						style={density === d
+							? 'background: var(--color-surface); color: var(--color-accent); box-shadow: var(--shadow-soft);'
+							: 'color: var(--color-accent-soft);'}
+						title={d === 'large' ? 'Large grid' : d === 'medium' ? 'Medium grid' : 'List view'}
+					>
+						{#if d === 'large'}
+							<svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+								<rect x="1" y="1" width="6" height="6" rx="1" /><rect x="9" y="1" width="6" height="6" rx="1" />
+								<rect x="1" y="9" width="6" height="6" rx="1" /><rect x="9" y="9" width="6" height="6" rx="1" />
+							</svg>
+						{:else if d === 'medium'}
+							<svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+								<rect x="1" y="1" width="4" height="4" rx="0.5" /><rect x="6" y="1" width="4" height="4" rx="0.5" /><rect x="11" y="1" width="4" height="4" rx="0.5" />
+								<rect x="1" y="6" width="4" height="4" rx="0.5" /><rect x="6" y="6" width="4" height="4" rx="0.5" /><rect x="11" y="6" width="4" height="4" rx="0.5" />
+								<rect x="1" y="11" width="4" height="4" rx="0.5" /><rect x="6" y="11" width="4" height="4" rx="0.5" /><rect x="11" y="11" width="4" height="4" rx="0.5" />
+							</svg>
+						{:else}
+							<svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+								<rect x="1" y="1" width="14" height="3" rx="1" /><rect x="1" y="6" width="14" height="3" rx="1" /><rect x="1" y="11" width="14" height="3" rx="1" />
+							</svg>
+						{/if}
+					</button>
+				{/each}
 			</div>
 		</div>
 
 		<!-- Scrollable content -->
-		<div class="flex-1 overflow-y-auto">
+		<div class="main-content flex-1 overflow-y-auto">
 			{#if showHero}
 				<HeroBanner />
 			{/if}
 
 			<div class="p-4">
 				{#if store.loading}
-					<p class="mt-8 text-center text-gray-500">Loading videos...</p>
+					<p class="mt-8 text-center" style="color: var(--color-text-soft);">Loading videos...</p>
 				{:else if store.error}
-					<p class="mt-8 text-center text-red-500">{store.error}</p>
+					<p class="mt-8 text-center" style="color: var(--color-accent);">{store.error}</p>
 				{:else if filteredVideos.length === 0}
-					<p class="mt-8 text-center text-gray-500">No videos found.</p>
+					<p class="mt-8 text-center" style="color: var(--color-text-soft);">No videos found.</p>
 				{:else if sortBy === 'title'}
 					<div class={gridClass}>
 						{#each filteredVideos as video (video.id)}
@@ -275,8 +243,8 @@
 					{#each videoGroups ?? [] as group (group.year)}
 						<div class="mb-8">
 							<div class="mb-3 flex items-center gap-3">
-								<h2 class="text-sm font-semibold text-gray-500">{group.year}</h2>
-								<div class="h-px flex-1 bg-gray-200"></div>
+								<h2 class="text-sm font-semibold" style="font-family: var(--font-body); color: var(--color-text-soft); letter-spacing: 0.05em;">{group.year}</h2>
+								<div class="h-px flex-1" style="background: var(--color-border);"></div>
 							</div>
 							<div class={gridClass}>
 								{#each group.videos as video (video.id)}
