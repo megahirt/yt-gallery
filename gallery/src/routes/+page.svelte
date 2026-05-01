@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
+	import { page } from '$app/state';
+	import { replaceState } from '$app/navigation';
 	import type { Video, PlaylistRef } from '$lib/types';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import HeroBanner from '$lib/components/HeroBanner.svelte';
@@ -15,11 +17,40 @@
 
 	const store = getContext<VideoStore>('videoStore');
 
-	let searchQuery = $state('');
-	let selectedCollection = $state<string | null>(null);
-	let sortBy = $state<'videoDate' | 'uploadDate' | 'title'>('videoDate');
-	let density = $state<'large' | 'medium' | 'list'>('medium');
+	const initParams = page.url.searchParams;
+
+	let searchQuery = $state(initParams.get('q') ?? '');
+	let selectedCollection = $state<string | null>(initParams.get('collection'));
+	let sortBy = $state<'videoDate' | 'uploadDate' | 'title'>(
+		(initParams.get('sort') as 'videoDate' | 'uploadDate' | 'title') ?? 'videoDate'
+	);
+	let density = $state<'large' | 'medium' | 'list'>(
+		(initParams.get('density') as 'large' | 'medium' | 'list') ?? 'medium'
+	);
 	let sidebarOpen = $state(false);
+
+	function syncUrl() {
+		const u = new URL(page.url);
+		searchQuery ? u.searchParams.set('q', searchQuery) : u.searchParams.delete('q');
+		selectedCollection
+			? u.searchParams.set('collection', selectedCollection)
+			: u.searchParams.delete('collection');
+		sortBy !== 'videoDate'
+			? u.searchParams.set('sort', sortBy)
+			: u.searchParams.delete('sort');
+		density !== 'medium'
+			? u.searchParams.set('density', density)
+			: u.searchParams.delete('density');
+		replaceState(u, {});
+	}
+
+	$effect(() => {
+		searchQuery;
+		selectedCollection;
+		sortBy;
+		density;
+		syncUrl();
+	});
 
 	// Derived: unique collections from all videos
 	const collections = $derived.by<PlaylistRef[]>(() => {
