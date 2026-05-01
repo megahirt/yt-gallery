@@ -100,7 +100,7 @@
 			<div class="overflow-hidden rounded-xl bg-black shadow-lg">
 				{#if playing}
 					<iframe
-						src="https://www.youtube.com/embed/{video.id}?autoplay=1"
+						src="https://www.youtube-nocookie.com/embed/{video.id}?autoplay=1"
 						title={video.title}
 						class="aspect-video w-full"
 						allow="autoplay; fullscreen; picture-in-picture"
