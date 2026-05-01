@@ -11,5 +11,10 @@ dependencies = [
 
 [tool.pytest.ini_options]
 # Unit tests mock all external Google API dependencies, so no credentials or
-# network access are required. Run with: python3 -m pytest fetch/tests/
+# network access are required. Run with: uv run pytest tests/
 testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]

@@ -22,6 +22,7 @@ uv sync                          # Install dependencies
 uv run login.py                  # OAuth login (local only, opens browser)
 uv run fetch_videos.py           # Fetch videos + playlists from YouTube API
 uv run make_simple_video_list.py # Generate simplified videos.json
+uv run pytest tests/             # Unit tests (mock all Google APIs)
 ```
 
 ### Gallery (SvelteKit)
@@ -32,6 +33,8 @@ npm install                      # Install dependencies
 npm run dev                      # Dev server (http://localhost:5173)
 npm run build                    # Static build → gallery/build/
 npm run preview                  # Preview production build
+npm run check                    # Type check (svelte-kit sync + svelte-check)
+npm run test:e2e                 # Playwright e2e tests
 ```
 
 Uses `uv` for Python (3.14) and `npm` for the gallery.
@@ -48,17 +51,46 @@ Uses `uv` for Python (3.14) and `npm` for the gallery.
 
 ### Gallery
 
-- SvelteKit with `adapter-static` — builds to pure static files
-- Skeleton UI v4 with Cerberus theme (`data-theme="cerberus"` on `<html>`)
-- `ssr = false` + `prerender = true` — client-side SPA that fetches `/videos.json` at runtime
-- Videos loaded via `fetch('/videos.json', { cache: 'no-store' })` on page load
+- SvelteKit 5 with `adapter-static` (`fallback: '404.html'` provides an SPA shell for dynamic routes)
+- `ssr = false` + `prerender = true` in `+layout.ts` — client-side SPA that fetches `/videos.json` at runtime via `fetch('/videos.json', { cache: 'no-store' })`
+- Skeleton UI v4 + Tailwind CSS v4. The Cerberus theme is imported in `app.css` but is NOT activated via a `data-theme` attribute — the site uses custom CSS variables in `:root` for a pure light layout (`--gallery-bg`, `--sidebar-bg`, `--card-bg`, `--accent`, etc.)
+- Layout is a **sidebar (240px) + main content**, defined in `+page.svelte` (NOT in `+layout.svelte`)
+- Routes: `/` gallery, `/video/[id]` detail page, `/admin` standalone (its own layout)
+- `+layout.svelte` is minimal — it loads the video store once via `$effect` and provides it via Svelte context with `setContext('videoStore', ...)`
+- Dynamic route `/video/[id]/+page.ts` requires `export const prerender = false` (the `404.html` SPA shell handles routing at runtime)
 - Search filters across title, description, tags, and playlist names
-- Playlist filter buttons extracted from video data
 
 ### CI/CD
 
 - **fetch-videos.yml**: Runs daily + manual trigger. Fetches from YouTube API, uploads `videos-json` artifact.
 - **deploy.yml**: Triggered on push to main OR after successful fetch workflow. Downloads latest `videos-json` artifact, builds gallery, deploys to GitHub Pages.
+
+## Svelte 5 Patterns
+
+- Use `$derived.by(() => { ... })` for multi-line derivations. Use `$derived(expr)` for simple expressions where `expr` is **NOT** a function — passing a function to `$derived` (without `.by`) is a common mistake.
+- Module-level reactive stores in `.svelte.ts` files use a function-factory + getters pattern (state is hidden inside the factory; getters expose it reactively).
+- Cross-component sharing: `setContext('key', store)` in `+layout.svelte`, `getContext<Type>('key')` in pages.
+
+## Key Files
+
+- `gallery/src/lib/config.ts` — `SITE_NAME`, `SITE_SUBTITLE`
+- `gallery/src/lib/stores/videos.svelte.ts` — singleton video store
+- `gallery/src/lib/components/Sidebar.svelte` — collections, sort, people/places placeholders
+- `gallery/src/lib/components/VideoCard.svelte` — `div[role="button"]` (NOT `<a>`), navigates to `/video/[id]`
+- `gallery/src/lib/components/HeroBanner.svelte` — `static/hero.jpg` with gradient fallback
+- `gallery/src/routes/video/[id]/+page.ts` — `export const prerender = false`
+
+## E2E Tests (Playwright)
+
+- Tests live in `gallery/tests/` (`gallery.spec.ts`, `admin.spec.ts`).
+- Card selector: `.grid [role="button"]` — cards are divs with `role="button"`, not `<a>` tags.
+- `mockVideos` fixture type: `ReadonlyArray<object>` (accepts `sampleVideos`, empty `[]`, or mapped arrays).
+- For empty playlists in fixtures: `const x: object[] = sampleVideos.map(v => ({...v, playlists: []}))`.
+- Sidebar collections via `getByRole('button', { name: 'All Videos' })` / `name: 'Birthdays'`.
+
+## Project Management
+
+How issues get tracked is documented in [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md). TL;DR: I file/list/triage GitHub issues for the user via `gh`; the user does not use the GitHub web UI for issue management.
 
 ## Sensitive Files (gitignored)
 
