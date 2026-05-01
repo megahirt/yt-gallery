@@ -41,6 +41,15 @@
 	const viewCount = $derived(video ? Number(video.viewCount).toLocaleString() : '');
 
 	let playing = $state(false);
+	let copied = $state(false);
+
+	function copyLink() {
+		const url = `https://www.youtube.com/watch?v=${video?.id}`;
+		navigator.clipboard.writeText(url).then(() => {
+			copied = true;
+			setTimeout(() => (copied = false), 2000);
+		});
+	}
 </script>
 
 <svelte:head>
@@ -72,19 +81,39 @@
 				Back to Gallery
 			</a>
 			{#if video}
-				<a
-					href="https://www.youtube.com/watch?v={video.id}"
-					target="_blank"
-					rel="noopener noreferrer"
-					class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
-				>
-					<svg class="h-4 w-4 text-red-500" viewBox="0 0 24 24" fill="currentColor">
-						<path
-							d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"
-						/>
-					</svg>
-					Watch on YouTube
-				</a>
+				<div class="flex items-center gap-2">
+					<button
+						onclick={copyLink}
+						class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+						title="Copy link"
+					>
+						{#if copied}
+							<svg class="h-4 w-4 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+							</svg>
+							Copied!
+						{:else}
+							<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+								<path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+							</svg>
+							Copy link
+						{/if}
+					</button>
+					<a
+						href="https://www.youtube.com/watch?v={video.id}"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+					>
+						<svg class="h-4 w-4 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+							<path
+								d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"
+							/>
+						</svg>
+						Watch on YouTube
+					</a>
+				</div>
 			{/if}
 		</div>
 	</div>
