@@ -287,6 +287,34 @@ test.describe('Gallery page — grid density toggle', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Card navigation
+// ---------------------------------------------------------------------------
+
+test.describe('Gallery page — card navigation', () => {
+	test('clicking a card in medium (grid) view navigates to the video detail page', async ({ page }) => {
+		await mockVideos(page);
+		await page.goto('/');
+
+		const card = page.locator('.grid [role="button"]').first();
+		await card.click();
+
+		await expect(page).toHaveURL(/\/video\//);
+	});
+
+	test('clicking a card in list view navigates to the video detail page', async ({ page }) => {
+		await mockVideos(page);
+		await page.goto('/');
+
+		await page.getByTitle('List view').click();
+
+		const card = page.locator('.grid [role="button"]').first();
+		await card.click();
+
+		await expect(page).toHaveURL(/\/video\//);
+	});
+});
+
+// ---------------------------------------------------------------------------
 // Video detail page
 // ---------------------------------------------------------------------------
 
