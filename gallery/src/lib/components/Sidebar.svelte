@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { PlaylistRef } from '$lib/types';
 	import { SITE_NAME } from '$lib/config';
+	import { PUBLIC_BUILD_VERSION } from '$env/static/public';
+
+	const version = PUBLIC_BUILD_VERSION || 'dev';
 
 	let {
 		collections,
@@ -81,6 +84,11 @@
 		<p class="section-label">Places</p>
 		<p class="coming-soon">Coming soon</p>
 	</div>
+
+	<!-- Version -->
+	<div class="mt-auto border-t px-4 py-3" style="border-color: var(--color-border);">
+		<p class="version">{version}</p>
+	</div>
 </aside>
 
 <style>
@@ -148,6 +156,11 @@
 
 	.coming-soon {
 		font-size: var(--text-small);
+		color: var(--color-accent-soft);
+	}
+
+	.version {
+		font-size: 11px;
 		color: var(--color-accent-soft);
 	}
 </style>

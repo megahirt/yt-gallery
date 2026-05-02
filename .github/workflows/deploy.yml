@@ -55,6 +55,7 @@ jobs:
         env:
           BASE_PATH: /yt-gallery
           VITE_PUBLISHED_VIDEOS_URL: ${{ vars.PUBLISHED_VIDEOS_URL }}
+          PUBLIC_BUILD_VERSION: ${{ github.ref_name }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5.0.0
