@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { replaceState } from '$app/navigation';
 	import type { Video, PlaylistRef } from '$lib/types';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import HeroBanner from '$lib/components/HeroBanner.svelte';
@@ -28,8 +28,14 @@
 		(initParams.get('density') as 'large' | 'medium' | 'list') ?? 'medium'
 	);
 	let sidebarOpen = $state(false);
+	let canSyncUrl = $state(false);
+
+	onMount(() => {
+		canSyncUrl = true;
+	});
 
 	function syncUrl() {
+		if (typeof window === 'undefined') return;
 		const u = new URL(page.url);
 		searchQuery ? u.searchParams.set('q', searchQuery) : u.searchParams.delete('q');
 		selectedCollection
@@ -41,10 +47,15 @@
 		density !== 'medium'
 			? u.searchParams.set('density', density)
 			: u.searchParams.delete('density');
-		replaceState(u, {});
+		const next = `${u.pathname}${u.search}${u.hash}`;
+		const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+		if (next !== current) {
+			window.history.replaceState(window.history.state, '', next);
+		}
 	}
 
 	$effect(() => {
+		if (!canSyncUrl) return;
 		searchQuery;
 		selectedCollection;
 		sortBy;
@@ -136,7 +147,7 @@
 </script>
 
 <svelte:head>
-	<title>Hirt Family Gallery</title>
+	<title>MegaHirt Gallery</title>
 </svelte:head>
 
 <div class="flex h-screen" style="background: var(--color-bg);">

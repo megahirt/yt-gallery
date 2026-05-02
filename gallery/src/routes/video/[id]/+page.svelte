@@ -51,7 +51,7 @@
 </script>
 
 <svelte:head>
-	<title>{video?.title ?? 'Video'} — Hirt Family Gallery</title>
+	<title>{video?.title ?? 'Video'} — MegaHirt Gallery</title>
 </svelte:head>
 
 <div class="page-shell">

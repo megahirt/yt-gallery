@@ -1,6 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
 import { sampleVideos } from './fixtures/sample-videos.js';
 
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
@@ -36,13 +40,13 @@ test.describe('Gallery page — video display', () => {
 	test('renders the page title in the browser tab', async ({ page }) => {
 		await mockVideos(page);
 		await page.goto('/');
-		await expect(page).toHaveTitle('Hirt Family Gallery');
+		await expect(page).toHaveTitle('MegaHirt Gallery');
 	});
 
 	test('shows the site name in the sidebar', async ({ page }) => {
 		await mockVideos(page);
 		await page.goto('/');
-		await expect(page.getByRole('complementary').getByText('Hirt Family Gallery')).toBeVisible();
+		await expect(page.getByRole('complementary').getByText('MegaHirt Gallery')).toBeVisible();
 	});
 
 	test('displays a video card for each video', async ({ page }) => {
@@ -66,12 +70,18 @@ test.describe('Gallery page — video display', () => {
 	test('clicking a video card navigates to the detail page', async ({ page }) => {
 		await mockVideos(page);
 		await page.goto('/');
+		const firstVideo = sampleVideos[0];
+		const pageErrors: string[] = [];
+		page.on('pageerror', (err) => pageErrors.push(err.message));
 
-		const firstCard = page.locator('.grid [role="button"]').first();
+		const firstCard = page
+			.getByRole('button', { name: new RegExp(escapeRegExp(firstVideo.title), 'i') })
+			.first();
 		await firstCard.click();
 
-		// Should navigate to /video/[id]
-		await expect(page).toHaveURL(/\/video\//);
+		await expect(page).toHaveURL(new RegExp(`/video/${firstVideo.id}$`));
+		await expect(page.getByRole('heading', { level: 1, name: firstVideo.title })).toBeVisible();
+		expect(pageErrors).toEqual([]);
 	});
 
 	test('shows tag chips on video cards that have tags', async ({ page }) => {
@@ -291,14 +301,25 @@ test.describe('Gallery page — grid density toggle', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('Gallery page — card navigation', () => {
+	async function expectClickNavigatesWithoutPageErrors(page: Page) {
+		const firstVideo = sampleVideos[0];
+		const pageErrors: string[] = [];
+		page.on('pageerror', (err) => pageErrors.push(err.message));
+
+		const card = page
+			.getByRole('button', { name: new RegExp(escapeRegExp(firstVideo.title), 'i') })
+			.first();
+		await card.click();
+
+		await expect(page).toHaveURL(new RegExp(`/video/${firstVideo.id}$`));
+		await expect(page.getByRole('heading', { level: 1, name: firstVideo.title })).toBeVisible();
+		expect(pageErrors).toEqual([]);
+	}
+
 	test('clicking a card in medium (grid) view navigates to the video detail page', async ({ page }) => {
 		await mockVideos(page);
 		await page.goto('/');
-
-		const card = page.locator('.grid [role="button"]').first();
-		await card.click();
-
-		await expect(page).toHaveURL(/\/video\//);
+		await expectClickNavigatesWithoutPageErrors(page);
 	});
 
 	test('clicking a card in list view navigates to the video detail page', async ({ page }) => {
@@ -306,11 +327,7 @@ test.describe('Gallery page — card navigation', () => {
 		await page.goto('/');
 
 		await page.getByTitle('List view').click();
-
-		const card = page.locator('.grid [role="button"]').first();
-		await card.click();
-
-		await expect(page).toHaveURL(/\/video\//);
+		await expectClickNavigatesWithoutPageErrors(page);
 	});
 });
 
