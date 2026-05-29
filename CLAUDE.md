@@ -22,8 +22,22 @@ uv sync                          # Install dependencies
 uv run login.py                  # OAuth login (local only, opens browser)
 uv run fetch_videos.py           # Fetch videos + playlists from YouTube API
 uv run make_simple_video_list.py # Generate simplified videos.json
+uv run export_recording_dates.py # Export CSV for bulk-editing recording dates
+uv run set_recording_dates.py    # Push edited recording dates back to YouTube
 uv run pytest tests/             # Unit tests (mock all Google APIs)
 ```
+
+#### Bulk-editing recording dates
+
+`login.py` now uses the full `youtube` write scope (superset of `youtube.readonly`).
+If you have an existing `token.json` generated with the old scope, delete it and re-run
+`uv run login.py` to get a fresh token, then update the `YOUTUBE_TOKEN_JSON` GitHub secret.
+
+Workflow:
+1. `uv run export_recording_dates.py` → writes `recording_dates.csv` (gitignored)
+2. Open the CSV in a spreadsheet; fill in `recording_date` (YYYY-MM-DD) for each video
+3. `uv run set_recording_dates.py` → pushes dates to YouTube (≈0.3s per video)
+4. `uv run fetch_videos.py && uv run make_simple_video_list.py` → sync the gallery
 
 ### Gallery (SvelteKit)
 
