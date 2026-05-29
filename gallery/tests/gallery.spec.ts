@@ -375,4 +375,19 @@ test.describe('Video detail page', () => {
 
 		await expect(page.getByText('Video not found.')).toBeVisible();
 	});
+
+	test('shows "Filmed" date on detail page when videoDate is present', async ({ page }) => {
+		await mockVideos(page);
+		await page.goto('/video/vacationVid1'); // has videoDate: '2023-07-10T00:00:00Z'
+
+		await expect(page.getByText(/Filmed/)).toBeVisible();
+		await expect(page.getByText('Filmed July 10, 2023')).toBeVisible();
+	});
+
+	test('does not show "Filmed" label on detail page when videoDate is absent', async ({ page }) => {
+		await mockVideos(page);
+		await page.goto('/video/birthdayVid2'); // videoDate: null
+
+		await expect(page.getByText(/Filmed/)).not.toBeVisible();
+	});
 });
