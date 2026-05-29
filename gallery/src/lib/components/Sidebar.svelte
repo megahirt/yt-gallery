@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PlaylistRef } from '$lib/types';
-	import { SITE_NAME } from '$lib/config';
+	import { SITE_NAME, EXCLUDED_TAGS } from '$lib/config';
 	import { PUBLIC_BUILD_VERSION } from '$env/static/public';
 
 	const version = PUBLIC_BUILD_VERSION || 'dev';
@@ -9,15 +9,19 @@
 		collections,
 		selectedCollection = $bindable<string | null>(null),
 		sortBy = $bindable<'videoDate' | 'uploadDate' | 'title'>('videoDate'),
+		showExcluded = $bindable(false),
 		videoCounts,
 		totalCount
 	}: {
 		collections: PlaylistRef[];
 		selectedCollection: string | null;
 		sortBy: 'videoDate' | 'uploadDate' | 'title';
+		showExcluded: boolean;
 		videoCounts: Map<string, number>;
 		totalCount: number;
 	} = $props();
+
+	const excludedLabel = EXCLUDED_TAGS.join(', ');
 </script>
 
 <aside class="sidebar flex h-full w-60 shrink-0 flex-col overflow-y-auto">
@@ -72,6 +76,16 @@
 			{/each}
 		</nav>
 	</div>
+
+	<!-- Excluded tags toggle -->
+	{#if EXCLUDED_TAGS.length > 0}
+		<div class="section border-t px-4 py-3" style="border-color: var(--color-border);">
+			<label class="toggle-row">
+				<input type="checkbox" bind:checked={showExcluded} class="toggle-checkbox" />
+				<span class="toggle-label">Show {excludedLabel} videos</span>
+			</label>
+		</div>
+	{/if}
 
 	<!-- People -->
 	<div class="section border-t px-4 py-3" style="border-color: var(--color-border);">
@@ -152,6 +166,26 @@
 	.count {
 		font-size: 11px;
 		color: var(--color-accent-soft);
+	}
+
+	.toggle-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		cursor: pointer;
+	}
+
+	.toggle-checkbox {
+		width: 14px;
+		height: 14px;
+		accent-color: var(--color-accent);
+		cursor: pointer;
+		flex-shrink: 0;
+	}
+
+	.toggle-label {
+		font-size: var(--text-small);
+		color: var(--color-text-soft);
 	}
 
 	.coming-soon {
