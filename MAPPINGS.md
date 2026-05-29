@@ -12,6 +12,7 @@ Raw response from the YouTube Data API [`videos.list`](https://developers.google
 - **`contentDetails`** — duration, definition, dimension, caption, projection
 - **`statistics`** — view count, like count, comment count
 - **`status`** — privacy status, upload status, embeddable, madeForKids
+- **`recordingDetails`** — date the video was recorded (set manually in YouTube Studio)
 
 Produced by: `fetch_videos.py`
 
@@ -60,7 +61,8 @@ Produced by `make_simple_video_list.py` from `videos_full.json` + `playlists_ful
 | `url` | — | Constructed as `https://www.youtube.com/watch?v={id}` |
 | `title` | `item["snippet"]["title"]` | |
 | `description` | `item["snippet"]["description"]` | |
-| `uploadDate` | `item["snippet"]["publishedAt"]` | ISO 8601 datetime string |
+| `uploadDate` | `item["snippet"]["publishedAt"]` | ISO 8601 datetime — when the video was published to YouTube |
+| `videoDate` | `item["recordingDetails"]["recordingDate"]` | ISO 8601 datetime — when the video was filmed (set in YT Studio). `null` if not set |
 | `tags` | `item["snippet"]["tags"]` | Defaults to `[]` if absent |
 | `privacyStatus` | `item["status"]["privacyStatus"]` | `"public"`, `"unlisted"`, or `"private"` |
 | `thumbnails.high` | `item["snippet"]["thumbnails"]["high"]` | Object with `url`, `width`, `height` |
@@ -79,6 +81,7 @@ Produced by `make_simple_video_list.py` from `videos_full.json` + `playlists_ful
   "title": "My Video Title",
   "description": "A description of the video.",
   "uploadDate": "2024-03-01T14:00:00Z",
+  "videoDate": "2024-02-14T00:00:00Z",
   "tags": ["tutorial", "python"],
   "privacyStatus": "public",
   "thumbnails": {

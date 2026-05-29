@@ -9,6 +9,7 @@ export const sampleVideos = [
 		title: 'Family Vacation 2023',
 		description: 'Our summer trip to the beach. Fun in the sun!',
 		uploadDate: '2023-07-15T12:00:00Z',
+		videoDate: '2023-07-10T00:00:00Z',
 		tags: ['vacation', 'beach', 'summer'],
 		privacyStatus: 'public',
 		thumbnails: {
@@ -34,6 +35,7 @@ export const sampleVideos = [
 		title: "Grandma's Birthday Party",
 		description: "Celebrating grandma turning 80. A wonderful day with family.",
 		uploadDate: '2023-09-20T15:30:00Z',
+		videoDate: null,
 		tags: ['birthday', 'party', 'grandma'],
 		privacyStatus: 'unlisted',
 		thumbnails: {
@@ -58,6 +60,7 @@ export const sampleVideos = [
 		title: 'Christmas Morning',
 		description: 'Opening presents on Christmas morning.',
 		uploadDate: '2023-12-25T08:00:00Z',
+		videoDate: '2023-12-25T00:00:00Z',
 		tags: ['christmas', 'holidays', 'presents'],
 		privacyStatus: 'public',
 		thumbnails: {

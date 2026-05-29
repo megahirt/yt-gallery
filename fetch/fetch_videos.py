@@ -53,7 +53,7 @@ def get_video_details(youtube, video_ids):
         batch = video_ids[i : i + 50]
         response = youtube.videos().list(
             id=",".join(batch),
-            part="snippet,contentDetails,statistics,status",
+            part="snippet,contentDetails,statistics,status,recordingDetails",
         ).execute()
         all_videos.extend(response["items"])
     return all_videos

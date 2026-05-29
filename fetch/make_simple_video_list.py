@@ -31,6 +31,7 @@ def simplify_video(item, membership_lookup):
     status = item["status"]
     statistics = item.get("statistics", {})
     thumbnails = snippet.get("thumbnails", {})
+    recording = item.get("recordingDetails", {})
 
     high_thumb = thumbnails.get("high")
     standard_thumb = thumbnails.get("standard") or high_thumb
@@ -41,6 +42,7 @@ def simplify_video(item, membership_lookup):
         "title": snippet["title"],
         "description": snippet.get("description", ""),
         "uploadDate": snippet["publishedAt"],
+        "videoDate": recording.get("recordingDate"),
         "tags": snippet.get("tags", []),
         "privacyStatus": status["privacyStatus"],
         "thumbnails": {
