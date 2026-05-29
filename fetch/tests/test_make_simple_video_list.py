@@ -41,6 +41,7 @@ def make_raw_video(
     view_count="100",
     high_thumb=None,
     standard_thumb=None,
+    recording_date=None,
 ):
     """Build a minimal raw YouTube API video resource."""
     thumbnails = {}
@@ -69,6 +70,8 @@ def make_raw_video(
         video["snippet"]["tags"] = tags
     if category_id is not None:
         video["snippet"]["categoryId"] = category_id
+    if recording_date is not None:
+        video["recordingDetails"] = {"recordingDate": recording_date}
 
     return video
 
@@ -153,6 +156,7 @@ class TestSimplifyVideo:
         assert result["title"] == "My Great Video"
         assert result["description"] == "A thorough description."
         assert result["uploadDate"] == "2024-03-01T14:00:00Z"
+        assert result["videoDate"] is None
         assert result["tags"] == ["tutorial", "python"]
         assert result["privacyStatus"] == "public"
         assert result["thumbnails"]["high"] == THUMB_HIGH
@@ -161,6 +165,23 @@ class TestSimplifyVideo:
         assert result["categoryId"] == "28"
         assert result["viewCount"] == "4321"
         assert result["playlists"] == [{"id": "PL1", "title": "Tech Talks"}]
+
+    def test_video_date_populated_from_recording_date(self):
+        raw = make_raw_video(recording_date="2023-12-25T08:00:00Z")
+        result = simplify_video(raw, {})
+        assert result["videoDate"] == "2023-12-25T08:00:00Z"
+
+    def test_video_date_none_when_recording_details_absent(self):
+        raw = make_raw_video()  # no recordingDetails key at all
+        assert "recordingDetails" not in raw
+        result = simplify_video(raw, {})
+        assert result["videoDate"] is None
+
+    def test_video_date_none_when_recording_date_absent_from_details(self):
+        raw = make_raw_video()
+        raw["recordingDetails"] = {}  # key present but recordingDate missing
+        result = simplify_video(raw, {})
+        assert result["videoDate"] is None
 
     def test_url_constructed_from_video_id(self):
         raw = make_raw_video(video_id="dQw4w9WgXcQ")
