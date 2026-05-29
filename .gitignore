@@ -12,6 +12,7 @@ wheels/
 # Sensitive credentials — never commit these
 client_secret.json
 token.json
+token_write.json
 
 # Generated output (fetch pipeline)
 videos_full.json
