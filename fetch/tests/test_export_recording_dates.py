@@ -1,5 +1,5 @@
 """
-Unit tests for export_recording_dates.py.
+Unit tests for export_recording_dates.py and set_recording_dates.build_recording_date.
 """
 
 import csv
@@ -12,6 +12,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from export_recording_dates import build_rows, main, FIELDNAMES
+from set_recording_dates import build_recording_date
 
 
 def make_video(video_id="vid1", title="Test", upload_date="2024-03-01T14:00:00Z",
@@ -34,15 +35,19 @@ class TestBuildRows:
         assert rows[0]["title"] == "My Video"
         assert rows[0]["upload_date"] == "2024-06-01"
 
-    def test_recording_date_blank_when_video_date_absent(self):
+    def test_year_month_day_blank_when_video_date_absent(self):
         videos = [make_video(video_date=None)]
         rows = build_rows(videos)
-        assert rows[0]["recording_date"] == ""
+        assert rows[0]["year"] == ""
+        assert rows[0]["month"] == ""
+        assert rows[0]["day"] == ""
 
-    def test_recording_date_trimmed_to_date_only(self):
+    def test_year_month_day_split_from_video_date(self):
         videos = [make_video(video_date="2023-12-25T00:00:00.000Z")]
         rows = build_rows(videos)
-        assert rows[0]["recording_date"] == "2023-12-25"
+        assert rows[0]["year"] == "2023"
+        assert rows[0]["month"] == "12"
+        assert rows[0]["day"] == "25"
 
     def test_description_included(self):
         videos = [make_video(description="Family trip to the beach.")]
@@ -65,6 +70,45 @@ class TestBuildRows:
         videos = [make_video(upload_date="2023-07-15T12:34:56Z")]
         rows = build_rows(videos)
         assert rows[0]["upload_date"] == "2023-07-15"
+
+    def test_fieldnames_has_split_columns(self):
+        assert "year" in FIELDNAMES
+        assert "month" in FIELDNAMES
+        assert "day" in FIELDNAMES
+        assert "recording_date" not in FIELDNAMES
+
+
+class TestBuildRecordingDate:
+    def test_full_date(self):
+        rfc, display = build_recording_date("2023", "07", "10")
+        assert rfc == "2023-07-10T00:00:00.000Z"
+        assert display == "2023-07-10"
+
+    def test_year_and_month_only(self):
+        rfc, display = build_recording_date("2023", "07", "")
+        assert rfc == "2023-07-01T00:00:00.000Z"
+        assert display == "2023-07"
+
+    def test_year_only(self):
+        rfc, display = build_recording_date("2023", "", "")
+        assert rfc == "2023-01-01T00:00:00.000Z"
+        assert display == "2023"
+
+    def test_missing_year_raises(self):
+        with pytest.raises(ValueError, match="year is required"):
+            build_recording_date("", "07", "10")
+
+    def test_invalid_month_raises(self):
+        with pytest.raises(ValueError, match="month"):
+            build_recording_date("2023", "13", "")
+
+    def test_invalid_day_raises(self):
+        with pytest.raises(ValueError, match="day"):
+            build_recording_date("2023", "07", "32")
+
+    def test_whitespace_stripped(self):
+        rfc, _ = build_recording_date("  2023  ", "  07  ", "  10  ")
+        assert rfc == "2023-07-10T00:00:00.000Z"
 
 
 class TestMain:
@@ -92,9 +136,13 @@ class TestMain:
 
         assert len(rows) == 2
         assert rows[0]["video_id"] == "v1"
-        assert rows[0]["recording_date"] == ""
+        assert rows[0]["year"] == ""
+        assert rows[0]["month"] == ""
+        assert rows[0]["day"] == ""
         assert rows[1]["video_id"] == "v2"
-        assert rows[1]["recording_date"] == "2022-12-25"
+        assert rows[1]["year"] == "2022"
+        assert rows[1]["month"] == "12"
+        assert rows[1]["day"] == "25"
 
     def test_raises_if_videos_json_missing(self, tmp_path, monkeypatch):
         import export_recording_dates as erd
