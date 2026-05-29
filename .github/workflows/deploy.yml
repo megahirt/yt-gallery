@@ -1,9 +1,12 @@
 name: Deploy to GitHub Pages
 
 on:
+  workflow_run:
+    workflows: ["Fetch YouTube Videos"]
+    types: [completed]
+    branches: [main]
   push:
-    tags:
-      - 'v*'
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,6 +19,8 @@ concurrency:
 
 jobs:
   deploy:
+    # When triggered by workflow_run, only proceed if the fetch succeeded.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     environment:
