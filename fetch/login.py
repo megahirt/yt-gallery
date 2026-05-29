@@ -4,7 +4,9 @@ from pathlib import Path
 
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
+# Full write scope (superset of youtube.readonly) — required for set_recording_dates.py.
+# The daily CI fetch works fine with this broader scope.
+SCOPES = ["https://www.googleapis.com/auth/youtube"]
 
 HERE = Path(__file__).parent
 CLIENT_SECRET_FILE = HERE / "client_secret.json"
