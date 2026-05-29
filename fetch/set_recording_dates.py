@@ -1,9 +1,11 @@
 """
 Reads recording_dates.csv and sets the recording date on each YouTube video
-that has a recording_date value filled in.
+that has a year value filled in.
 
-Run `uv run export_recording_dates.py` first to generate the CSV, fill in the
-recording_date column (YYYY-MM-DD), then run this script.
+Run `uv run export_recording_dates.py` first to generate the CSV, fill in at
+least the year column (month and day are optional), then run this script.
+
+Missing month defaults to 01; missing day defaults to 01.
 
 Requires token_write.json (write-scope token). Generate it with:
   uv run login_write.py
@@ -11,7 +13,6 @@ Requires token_write.json (write-scope token). Generate it with:
 
 import csv
 import time
-from datetime import date
 from pathlib import Path
 
 from google.auth.transport.requests import Request
@@ -39,10 +40,27 @@ def get_credentials():
     return creds
 
 
-def parse_date(date_str):
-    """Parse YYYY-MM-DD and return RFC 3339 string expected by the YouTube API."""
-    d = date.fromisoformat(date_str.strip())
-    return f"{d.isoformat()}T00:00:00.000Z"
+def build_recording_date(year, month, day):
+    """Build RFC 3339 date string from year/month/day, defaulting missing parts to 01.
+
+    Returns (date_str, display_str) or raises ValueError for invalid values.
+    """
+    y = year.strip()
+    m = month.strip() or "01"
+    d = day.strip() or "01"
+    if not y:
+        raise ValueError("year is required")
+    # Validate by constructing; raises ValueError on bad values
+    y_int = int(y)
+    m_int = int(m)
+    d_int = int(d)
+    if not (1 <= m_int <= 12):
+        raise ValueError(f"month {m!r} out of range 1-12")
+    if not (1 <= d_int <= 31):
+        raise ValueError(f"day {d!r} out of range 1-31")
+    iso = f"{y_int:04d}-{m_int:02d}-{d_int:02d}"
+    display = y if not month.strip() else (f"{y}-{m}" if not day.strip() else iso)
+    return f"{iso}T00:00:00.000Z", display
 
 
 def load_rows(path):
@@ -58,10 +76,10 @@ def main():
         )
 
     rows = load_rows(INPUT_FILE)
-    to_update = [r for r in rows if r.get("recording_date", "").strip()]
+    to_update = [r for r in rows if r.get("year", "").strip()]
 
     if not to_update:
-        print("No rows with recording_date filled in. Nothing to do.")
+        print("No rows with year filled in. Nothing to do.")
         return
 
     print(f"Found {len(to_update)} videos to update (out of {len(rows)} total).")
@@ -75,12 +93,15 @@ def main():
     for i, row in enumerate(to_update, 1):
         video_id = row["video_id"].strip()
         title = row["title"]
-        date_str = row["recording_date"].strip()
 
         try:
-            recording_date = parse_date(date_str)
-        except ValueError:
-            print(f"  [{i}/{len(to_update)}] SKIP  {title!r} — invalid date {date_str!r} (use YYYY-MM-DD)")
+            recording_date, display = build_recording_date(
+                row.get("year", ""),
+                row.get("month", ""),
+                row.get("day", ""),
+            )
+        except ValueError as e:
+            print(f"  [{i}/{len(to_update)}] SKIP  {title!r} — {e}")
             errors += 1
             continue
 
@@ -92,7 +113,7 @@ def main():
                     "recordingDetails": {"recordingDate": recording_date},
                 },
             ).execute()
-            print(f"  [{i}/{len(to_update)}] OK    {title!r} → {date_str}")
+            print(f"  [{i}/{len(to_update)}] OK    {title!r} → {display}")
             updated += 1
         except HttpError as e:
             print(f"  [{i}/{len(to_update)}] ERR   {title!r} — {e}")
