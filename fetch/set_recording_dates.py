@@ -5,8 +5,8 @@ that has a recording_date value filled in.
 Run `uv run export_recording_dates.py` first to generate the CSV, fill in the
 recording_date column (YYYY-MM-DD), then run this script.
 
-Requires a token with write scope. If you get a 403 error, re-run login.py
-to get a fresh token with the full youtube scope, then update the token.
+Requires token_write.json (write-scope token). Generate it with:
+  uv run login_write.py
 """
 
 import csv
@@ -19,19 +19,18 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# Full write scope — superset of youtube.readonly
 SCOPES = ["https://www.googleapis.com/auth/youtube"]
 
 HERE = Path(__file__).parent
-TOKEN_FILE = HERE / "token.json"
+TOKEN_FILE = HERE / "token_write.json"
 INPUT_FILE = HERE / "recording_dates.csv"
 
 
 def get_credentials():
     if not TOKEN_FILE.exists():
         raise FileNotFoundError(
-            f"Token file not found: {TOKEN_FILE}\n"
-            "Run `uv run login.py` locally first to generate token.json."
+            f"Write token not found: {TOKEN_FILE}\n"
+            "Run `uv run login_write.py` to generate it."
         )
     creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
     if not creds.valid and creds.expired and creds.refresh_token:
@@ -96,17 +95,9 @@ def main():
             print(f"  [{i}/{len(to_update)}] OK    {title!r} → {date_str}")
             updated += 1
         except HttpError as e:
-            if e.status_code == 403:
-                print(f"  [{i}/{len(to_update)}] ERR   {title!r} — 403 Forbidden")
-                print()
-                print("  Your token does not have write permission.")
-                print("  Update login.py SCOPES to 'youtube' (already done if you pulled latest),")
-                print("  delete token.json, run `uv run login.py` again, then retry.")
-                return
             print(f"  [{i}/{len(to_update)}] ERR   {title!r} — {e}")
             errors += 1
 
-        # Avoid hitting API quota limits
         if i < len(to_update):
             time.sleep(0.3)
 
