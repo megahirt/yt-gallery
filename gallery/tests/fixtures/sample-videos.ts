@@ -36,7 +36,7 @@ export const sampleVideos = [
 		description: "Celebrating grandma turning 80. A wonderful day with family.",
 		uploadDate: '2023-09-20T15:30:00Z',
 		videoDate: null,
-		tags: ['birthday', 'party', 'grandma'],
+		tags: ['birthday', 'party', 'grandma', 'work'],
 		privacyStatus: 'unlisted',
 		thumbnails: {
 			high: {

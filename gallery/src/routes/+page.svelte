@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import type { Video, PlaylistRef } from '$lib/types';
+	import { EXCLUDED_TAGS } from '$lib/config';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import HeroBanner from '$lib/components/HeroBanner.svelte';
 	import SearchBar from '$lib/components/SearchBar.svelte';
@@ -27,6 +28,7 @@
 	let density = $state<'large' | 'medium' | 'list'>(
 		(initParams.get('density') as 'large' | 'medium' | 'list') ?? 'medium'
 	);
+	let showExcluded = $state(initParams.get('showExcluded') === '1');
 	let sidebarOpen = $state(false);
 	let canSyncUrl = $state(false);
 
@@ -47,6 +49,9 @@
 		density !== 'medium'
 			? u.searchParams.set('density', density)
 			: u.searchParams.delete('density');
+		showExcluded
+			? u.searchParams.set('showExcluded', '1')
+			: u.searchParams.delete('showExcluded');
 		const next = `${u.pathname}${u.search}${u.hash}`;
 		const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
 		if (next !== current) {
@@ -60,6 +65,7 @@
 		selectedCollection;
 		sortBy;
 		density;
+		showExcluded;
 		syncUrl();
 	});
 
@@ -85,6 +91,12 @@
 
 	const filteredVideos = $derived.by<Video[]>(() => {
 		let result = store.videos;
+
+		if (!showExcluded && EXCLUDED_TAGS.length > 0) {
+			result = result.filter(
+				(v) => !v.tags.some((t) => EXCLUDED_TAGS.includes(t))
+			);
+		}
 
 		if (selectedCollection) {
 			result = result.filter((v) => v.playlists.some((p) => p.title === selectedCollection));
@@ -171,6 +183,7 @@
 			{collections}
 			bind:selectedCollection
 			bind:sortBy
+			bind:showExcluded
 			{videoCounts}
 			totalCount={store.videos.length}
 		/>
