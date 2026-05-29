@@ -18,6 +18,7 @@ videos_full.json
 playlists_full.json
 videos.json
 videos_private.json
+recording_dates.csv
 
 # Gallery (SvelteKit)
 gallery/node_modules/
