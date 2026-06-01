@@ -1,9 +1,11 @@
 import json
+import time
 from pathlib import Path
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
 
@@ -26,6 +28,25 @@ def get_credentials():
     return creds
 
 
+_RETRYABLE = {404, 429, 500, 502, 503, 504}
+
+
+def _execute(request, retries=4):
+    """Execute a YouTube API request, retrying on transient errors with backoff.
+
+    404 is included because the uploads playlist sporadically returns
+    'playlistNotFound' on paginated requests even when the playlist exists.
+    """
+    for attempt in range(retries):
+        try:
+            return request.execute()
+        except HttpError as e:
+            if e.status_code in _RETRYABLE and attempt < retries - 1:
+                time.sleep(2 ** attempt)
+            else:
+                raise
+
+
 def get_uploads_playlist_id(youtube):
     response = youtube.channels().list(part="contentDetails", mine=True).execute()
     return response["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
@@ -38,7 +59,7 @@ def get_all_video_ids(youtube, playlist_id):
         params = {"playlistId": playlist_id, "part": "contentDetails", "maxResults": 50}
         if next_page_token:
             params["pageToken"] = next_page_token
-        response = youtube.playlistItems().list(**params).execute()
+        response = _execute(youtube.playlistItems().list(**params))
         for item in response["items"]:
             video_ids.append(item["contentDetails"]["videoId"])
         next_page_token = response.get("nextPageToken")
@@ -67,7 +88,7 @@ def get_all_playlists(youtube):
         params = {"mine": True, "part": "snippet", "maxResults": 50}
         if next_page_token:
             params["pageToken"] = next_page_token
-        response = youtube.playlists().list(**params).execute()
+        response = _execute(youtube.playlists().list(**params))
         playlists.extend(response["items"])
         next_page_token = response.get("nextPageToken")
         if not next_page_token:
@@ -95,7 +116,7 @@ def get_playlist_memberships(youtube, playlists):
             }
             if next_page_token:
                 params["pageToken"] = next_page_token
-            response = youtube.playlistItems().list(**params).execute()
+            response = _execute(youtube.playlistItems().list(**params))
             for item in response["items"]:
                 resource = item["snippet"]["resourceId"]
                 if resource.get("kind") == "youtube#video":
