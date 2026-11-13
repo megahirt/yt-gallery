@@ -140,8 +140,8 @@ test.describe('Gallery page — excluded tags filter', () => {
 		await page.goto('/');
 
 		// birthdayVid2 has 'work' tag — should be hidden
-		await expect(page.getByText("Grandma's Birthday Party")).not.toBeVisible();
-		await expect(page.getByText('Family Vacation 2023')).toBeVisible();
+		await expect(page.locator('.grid').getByText("Grandma's Birthday Party")).not.toBeVisible();
+		await expect(page.locator('.grid').getByText('Family Vacation 2023')).toBeVisible();
 	});
 
 	test('shows excluded videos when toggle is checked', async ({ page }) => {
@@ -150,7 +150,7 @@ test.describe('Gallery page — excluded tags filter', () => {
 
 		await page.getByRole('checkbox', { name: /show work videos/i }).check();
 
-		await expect(page.getByText("Grandma's Birthday Party")).toBeVisible();
+		await expect(page.locator('.grid').getByText("Grandma's Birthday Party")).toBeVisible();
 	});
 
 	test('shows all videos when no videos have excluded tags', async ({ page }) => {
@@ -182,20 +182,20 @@ test.describe('Gallery page — search', () => {
 
 	test('filters videos by title', async ({ page }) => {
 		await page.getByPlaceholder('Search videos...').fill('vacation');
-		await expect(page.getByText('Family Vacation 2023')).toBeVisible();
-		await expect(page.getByText('Christmas Morning')).not.toBeVisible();
+		await expect(page.locator('.grid').getByText('Family Vacation 2023')).toBeVisible();
+		await expect(page.locator('.grid').getByText('Christmas Morning')).not.toBeVisible();
 	});
 
 	test('filters videos by description', async ({ page }) => {
 		await page.getByPlaceholder('Search videos...').fill('Opening presents');
-		await expect(page.getByText('Christmas Morning')).toBeVisible();
-		await expect(page.getByText('Family Vacation 2023')).not.toBeVisible();
+		await expect(page.locator('.grid').getByText('Christmas Morning')).toBeVisible();
+		await expect(page.locator('.grid').getByText('Family Vacation 2023')).not.toBeVisible();
 	});
 
 	test('filters videos by tag', async ({ page }) => {
 		await page.getByPlaceholder('Search videos...').fill('holidays');
-		await expect(page.getByText('Christmas Morning')).toBeVisible();
-		await expect(page.getByText('Family Vacation 2023')).not.toBeVisible();
+		await expect(page.locator('.grid').getByText('Christmas Morning')).toBeVisible();
+		await expect(page.locator('.grid').getByText('Family Vacation 2023')).not.toBeVisible();
 	});
 
 	test('filters videos by playlist name', async ({ page }) => {
@@ -206,7 +206,7 @@ test.describe('Gallery page — search', () => {
 
 	test('search is case-insensitive', async ({ page }) => {
 		await page.getByPlaceholder('Search videos...').fill('CHRISTMAS');
-		await expect(page.getByText('Christmas Morning')).toBeVisible();
+		await expect(page.locator('.grid').getByText('Christmas Morning')).toBeVisible();
 	});
 
 	test('shows "No videos found" message when no results match', async ({ page }) => {

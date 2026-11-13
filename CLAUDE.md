@@ -61,6 +61,7 @@ Workflow:
 cd gallery
 npm install                      # Install dependencies
 npm run dev                      # Dev server (http://localhost:5173)
+npm run dev:sample               # Dev server on :5174 with a generated sample library (thumbnails, dates, durations)
 npm run build                    # Static build → gallery/build/
 npm run preview                  # Preview production build
 npm run check                    # Type check (svelte-kit sync + svelte-check)
@@ -89,6 +90,8 @@ Uses `uv` for Python (3.14) and `npm` for the gallery.
 - `+layout.svelte` is minimal — it loads the video store once via `$effect` and provides it via Svelte context with `setContext('videoStore', ...)`
 - Dynamic route `/video/[id]/+page.ts` requires `export const prerender = false` (the `404.html` SPA shell handles routing at runtime)
 - Search filters across title, description, tags, and playlist names
+- Dates go through `src/lib/dates.ts`: `videoDate` is a calendar day stored as midnight UTC and must be formatted in UTC; `uploadDate` is shown in local time
+- `npm run sample-data` (`scripts/make-sample-data.mjs`) writes a made-up library to `static/sample/` (gitignored); `VITE_VIDEOS_PATH` points the store at it
 - `EXCLUDED_TAGS` in `config.ts` lists tags hidden by default; sidebar toggle to show them
 
 ### CI/CD
@@ -121,6 +124,7 @@ Uses `uv` for Python (3.14) and `npm` for the gallery.
 - `mockVideos` fixture type: `ReadonlyArray<object>` (accepts `sampleVideos`, empty `[]`, or mapped arrays).
 - For empty playlists in fixtures: `const x: object[] = sampleVideos.map(v => ({...v, playlists: []}))` .
 - Sidebar collections via `getByRole('button', { name: 'All Videos' })` / `name: 'Birthdays'`.
+- The featured memory at the top of the home page picks a random video, so look up card titles inside the grid (`page.locator('.grid').getByText(...)`), not page-wide.
 - `birthdayVid2` has the `work` tag and is excluded by default — tests that count all videos should use `sampleVideos.length - 1`.
 
 ## Project Management

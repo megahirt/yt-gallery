@@ -1,12 +1,13 @@
 <script lang="ts">
 	import type { Video } from '$lib/types';
+	import { formatVideoDate, videoYear } from '$lib/dates';
 
 	let { videos }: { videos: Video[] } = $props();
 
 	type Memory = { video: Video; eyebrow: string };
 
-	function yearsAgoLabel(date: Date, now: Date): string {
-		const years = now.getFullYear() - date.getFullYear();
+	function yearsAgoLabel(video: Video, now: Date): string {
+		const years = now.getFullYear() - videoYear(video);
 		if (years <= 0) return 'Earlier this year';
 		return years === 1 ? '1 year ago' : `${years} years ago`;
 	}
@@ -26,10 +27,9 @@
 				filmed.getUTCDate() === now.getDate() &&
 				filmed.getUTCFullYear() < now.getFullYear()
 			) {
-				onThisDay.push({ video, eyebrow: `On this day · ${yearsAgoLabel(filmed, now)}` });
+				onThisDay.push({ video, eyebrow: `On this day · ${yearsAgoLabel(video, now)}` });
 			} else {
-				const date = new Date(video.videoDate ?? video.uploadDate);
-				others.push({ video, eyebrow: `Remember this? · ${yearsAgoLabel(date, now)}` });
+				others.push({ video, eyebrow: `Remember this? · ${yearsAgoLabel(video, now)}` });
 			}
 		}
 
@@ -50,11 +50,7 @@
 	const meta = $derived.by<string>(() => {
 		if (!memory) return '';
 		const v = memory.video;
-		const date = new Date(v.videoDate ?? v.uploadDate).toLocaleDateString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric'
-		});
+		const date = formatVideoDate(v);
 		return v.playlists.length > 0 ? `${date} · ${v.playlists[0].title}` : date;
 	});
 </script>

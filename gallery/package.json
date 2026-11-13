@@ -5,6 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
+		"sample-data": "node scripts/make-sample-data.mjs",
+		"dev:sample": "npm run sample-data && VITE_VIDEOS_PATH=sample/videos.json vite dev --port 5174 --strictPort",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",

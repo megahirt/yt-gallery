@@ -342,3 +342,42 @@ class TestMainIntegration:
 
         with pytest.raises(FileNotFoundError, match="playlists_full.json"):
             msl.main()
+
+
+# ---------------------------------------------------------------------------
+# Tests for duration formatting
+# ---------------------------------------------------------------------------
+
+class TestDuration:
+    def test_minutes_and_seconds(self):
+        from make_simple_video_list import format_duration
+        assert format_duration("PT4M7S") == "4:07"
+
+    def test_seconds_only(self):
+        from make_simple_video_list import format_duration
+        assert format_duration("PT45S") == "0:45"
+
+    def test_hours(self):
+        from make_simple_video_list import format_duration
+        assert format_duration("PT1H2M3S") == "1:02:03"
+        assert format_duration("PT2H") == "2:00:00"
+
+    def test_days_roll_into_hours(self):
+        from make_simple_video_list import format_duration
+        assert format_duration("P1DT1H") == "25:00:00"
+
+    def test_missing_or_malformed_is_none(self):
+        from make_simple_video_list import format_duration
+        assert format_duration(None) is None
+        assert format_duration("") is None
+        assert format_duration("12:34") is None
+
+    def test_simplify_video_includes_duration(self):
+        raw = make_raw_video()
+        raw["contentDetails"] = {"duration": "PT12M34S"}
+        assert simplify_video(raw, {})["duration"] == "12:34"
+
+    def test_simplify_video_duration_none_when_absent(self):
+        raw = make_raw_video()
+        raw.pop("contentDetails", None)
+        assert simplify_video(raw, {})["duration"] is None

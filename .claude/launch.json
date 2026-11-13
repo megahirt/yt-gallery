@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "gallery-sample",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "gallery", "run", "dev:sample"],
+      "port": 5174
+    }
+  ]
+}

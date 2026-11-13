@@ -27,3 +27,4 @@ gallery/node_modules/
 gallery/build/
 gallery/.svelte-kit/
 gallery/static/videos.json
+gallery/static/sample/

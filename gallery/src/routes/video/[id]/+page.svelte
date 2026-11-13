@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import type { Video } from '$lib/types';
 	import { EXCLUDED_TAGS } from '$lib/config';
+	import { formatFilmedDate, formatUploadDate, videoTime, videoYear } from '$lib/dates';
 	import VideoCard from '$lib/components/VideoCard.svelte';
 
 	type VideoStore = {
@@ -18,27 +19,13 @@
 	const video = $derived(store.videos.find((v) => v.id === videoId) ?? null);
 	const thumbnail = $derived(video ? (video.thumbnails.standard ?? video.thumbnails.high) : null);
 
-	const uploadDate = $derived(
-		video
-			? new Date(video.uploadDate).toLocaleDateString('en-US', {
-					year: 'numeric',
-					month: 'long',
-					day: 'numeric'
-				})
-			: ''
-	);
+	const uploadDate = $derived(video ? formatUploadDate(video.uploadDate, 'long') : '');
 
 	const videoDateFormatted = $derived(
-		video?.videoDate
-			? new Date(video.videoDate).toLocaleDateString('en-US', {
-					year: 'numeric',
-					month: 'long',
-					day: 'numeric'
-				})
-			: null
+		video?.videoDate ? formatFilmedDate(video.videoDate, 'long') : null
 	);
 
-	const sortTime = (v: Video) => new Date(v.videoDate ?? v.uploadDate).getTime();
+	const sortTime = videoTime;
 	const isExcluded = (v: Video) => v.tags.some((t) => EXCLUDED_TAGS.includes(t));
 
 	type Context = { label: string; href: string | null; videos: Video[] };
@@ -62,8 +49,8 @@
 			}
 		}
 
-		const year = new Date(sortTime(current)).getFullYear();
-		const sameYear = pool.filter((v) => new Date(sortTime(v)).getFullYear() === year);
+		const year = videoYear(current);
+		const sameYear = pool.filter((v) => videoYear(v) === year);
 		if (sameYear.length > 1) {
 			return { label: String(year), href: null, videos: oldestFirst(sameYear) };
 		}

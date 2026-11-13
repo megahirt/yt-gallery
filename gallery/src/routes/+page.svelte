@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import type { Video, PlaylistRef } from '$lib/types';
 	import { EXCLUDED_TAGS } from '$lib/config';
+	import { uploadYear, videoYear } from '$lib/dates';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import MemorySlot from '$lib/components/MemorySlot.svelte';
 	import SearchBar from '$lib/components/SearchBar.svelte';
@@ -136,9 +137,7 @@
 
 		const map = new Map<number, Video[]>();
 		for (const video of filteredVideos) {
-			const dateStr =
-				sortBy === 'uploadDate' ? video.uploadDate : (video.videoDate ?? video.uploadDate);
-			const year = new Date(dateStr).getFullYear();
+			const year = sortBy === 'uploadDate' ? uploadYear(video.uploadDate) : videoYear(video);
 			if (!map.has(year)) map.set(year, []);
 			map.get(year)!.push(video);
 		}

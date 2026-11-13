@@ -4,6 +4,7 @@ See MAPPINGS.md for the full field mapping reference.
 """
 
 import json
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -25,6 +26,26 @@ def build_membership_lookup(playlists_full):
     return lookup
 
 
+_DURATION_RE = re.compile(r"^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$")
+
+
+def format_duration(iso_duration):
+    """Turn a YouTube ISO 8601 duration ("PT1H2M3S") into "1:02:03" / "2:03".
+
+    Returns None when the duration is missing or not in the expected form.
+    """
+    if not iso_duration:
+        return None
+    match = _DURATION_RE.match(iso_duration)
+    if not match:
+        return None
+    days, hours, minutes, seconds = (int(part or 0) for part in match.groups())
+    hours += days * 24
+    if hours:
+        return f"{hours}:{minutes:02d}:{seconds:02d}"
+    return f"{minutes}:{seconds:02d}"
+
+
 def simplify_video(item, membership_lookup):
     video_id = item["id"]
     snippet = item["snippet"]
@@ -43,6 +64,7 @@ def simplify_video(item, membership_lookup):
         "description": snippet.get("description", ""),
         "uploadDate": snippet["publishedAt"],
         "videoDate": recording.get("recordingDate"),
+        "duration": format_duration(item.get("contentDetails", {}).get("duration")),
         "tags": snippet.get("tags", []),
         "privacyStatus": status["privacyStatus"],
         "thumbnails": {

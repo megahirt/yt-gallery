@@ -3,6 +3,10 @@ import { base } from '$app/paths';
 
 const PUBLISHED_VIDEOS_URL = import.meta.env.VITE_PUBLISHED_VIDEOS_URL as string | undefined;
 
+// Lets local development load another data file, e.g. the generated sample
+// library (`npm run dev:sample` sets this to `sample/videos.json`).
+const VIDEOS_PATH = (import.meta.env.VITE_VIDEOS_PATH as string | undefined) || 'videos.json';
+
 function toVideoKey(videos: Video[]): string {
 	return videos.map((v) => `${v.id}:${v.uploadDate}:${v.videoDate ?? ''}`).join('|');
 }
@@ -40,7 +44,7 @@ function createVideoStore() {
 
 	async function load() {
 		if (!loading && videos.length > 0) return;
-		const localUrl = `${base}/videos.json`;
+		const localUrl = `${base}/${VIDEOS_PATH}`;
 		try {
 			const res = await fetch(localUrl, { cache: 'no-store' });
 			if (!res.ok) throw new Error(`Failed to fetch videos: ${res.status}`);

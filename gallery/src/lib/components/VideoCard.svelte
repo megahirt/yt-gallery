@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Video } from '$lib/types';
 	import { goto } from '$app/navigation';
+	import { formatVideoDate } from '$lib/dates';
 
 	let {
 		video,
@@ -12,13 +13,7 @@
 
 	const thumbnail = $derived(video.thumbnails.standard ?? video.thumbnails.high);
 
-	const date = $derived(
-		new Date(video.videoDate ?? video.uploadDate).toLocaleDateString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric'
-		})
-	);
+	const date = $derived(formatVideoDate(video));
 
 	function navigate() {
 		goto(`/video/${video.id}`);
