@@ -83,22 +83,38 @@ test.describe('Gallery page — video display', () => {
 		expect(pageErrors).toEqual([]);
 	});
 
-	test('shows tag chips on video cards that have tags', async ({ page }) => {
+	test('video cards show the date but no tag chips or view count', async ({ page }) => {
 		await mockVideos(page);
 		await page.goto('/');
 
-		// "Family Vacation 2023" has tags: vacation, beach, summer
+		// vacationVid1 has tags (vacation, beach, summer) and viewCount "42"
 		const vacationCard = page.locator('.grid [role="button"]', { hasText: 'Family Vacation 2023' });
-		await expect(vacationCard.getByText('#vacation')).toBeVisible();
+		await expect(vacationCard.getByText('2023', { exact: false }).last()).toBeVisible();
+		await expect(vacationCard.getByText('#vacation')).toHaveCount(0);
+		await expect(vacationCard.getByText('42 views')).toHaveCount(0);
 	});
 
-	test('shows view count on video cards', async ({ page }) => {
+	test('shows a featured memory that links to a video and can be swapped', async ({ page }) => {
 		await mockVideos(page);
 		await page.goto('/');
 
-		// vacationVid1 has viewCount: "42"
-		const vacationCard = page.locator('.grid [role="button"]', { hasText: 'Family Vacation 2023' });
-		await expect(vacationCard.getByText('42 views')).toBeVisible();
+		const memory = page.getByRole('region', { name: 'Featured memory' });
+		await expect(memory).toBeVisible();
+		await expect(memory.getByRole('link', { name: 'Watch', exact: true })).toHaveAttribute(
+			'href',
+			/\/video\/.+/
+		);
+
+		const firstTitle = await memory.getByRole('heading', { level: 1 }).textContent();
+		await memory.getByRole('button', { name: 'Another memory' }).click();
+		await expect(memory.getByRole('heading', { level: 1 })).not.toHaveText(firstTitle ?? '');
+	});
+
+	test('hides the featured memory while searching', async ({ page }) => {
+		await mockVideos(page);
+		await page.goto('/');
+		await page.getByPlaceholder('Search videos...').fill('christmas');
+		await expect(page.getByRole('region', { name: 'Featured memory' })).toHaveCount(0);
 	});
 
 	test('does not show tag chips on cards with no tags', async ({ page }) => {
@@ -401,6 +417,37 @@ test.describe('Video detail page', () => {
 		await page.goto('/video/vacationVid1');
 		await expect(page.getByText(/Filmed/)).toBeVisible();
 		await expect(page.getByText('Filmed July 10, 2023')).toBeVisible();
+	});
+
+	test('shows previous/next links and a "More from" row for the same collection', async ({ page }) => {
+		const videos = [
+			...sampleVideos,
+			{
+				...sampleVideos[0],
+				id: 'vacationVid9',
+				title: 'Lake Trip',
+				uploadDate: '2024-08-01T12:00:00Z',
+				videoDate: '2024-08-01T12:00:00Z',
+			},
+		] as object[];
+		await mockVideos(page, videos);
+		await page.goto('/video/vacationVid1');
+
+		const nav = page.getByRole('navigation', { name: /Previous and next in Vacations/ });
+		const next = nav.getByRole('link', { name: /Next in Vacations/ });
+		await expect(next).toContainText('Lake Trip');
+		await expect(page.getByRole('heading', { level: 2, name: 'More from Vacations' })).toBeVisible();
+		await expect(page.getByRole('link', { name: 'See all 2' })).toHaveAttribute(
+			'href',
+			'/?collection=Vacations'
+		);
+
+		await next.click();
+		await expect(page).toHaveURL(/\/video\/vacationVid9$/);
+		await expect(page.getByRole('heading', { level: 1, name: 'Lake Trip' })).toBeVisible();
+		await expect(nav.getByRole('link', { name: /Previous in Vacations/ })).toContainText(
+			'Family Vacation 2023'
+		);
 	});
 
 	test('does not show "Filmed" label on detail page when videoDate is absent', async ({ page }) => {

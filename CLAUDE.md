@@ -93,8 +93,10 @@ Uses `uv` for Python (3.14) and `npm` for the gallery.
 
 ### CI/CD
 
-- **fetch-videos.yml**: Runs daily + manual trigger. Fetches from YouTube API, uploads `videos-json` artifact.
-- **deploy.yml**: Triggered on push to main OR after successful fetch workflow. Downloads latest `videos-json` artifact, builds gallery, deploys to GitHub Pages.
+- **deploy.yml** is the only workflow. It runs daily, on manual trigger, and on push of a `v*` tag. Each run fetches from the YouTube API, copies `videos.json` into `gallery/static/`, builds the gallery and deploys to GitHub Pages.
+- Scheduled/manual runs build the **newest `v*` tag**, not `main` — gallery code (and the fetch scripts) only go live when a release is tagged. The `github-pages` environment allows `main` and `v*` refs.
+- If the YouTube fetch fails, the run redeploys with the `videos.json` from the live site and then fails, so GitHub sends a failure email (usually an expired OAuth token: `uv run login.py`, then update the `YOUTUBE_TOKEN_JSON` secret).
+- A keepalive step re-enables the workflow on each scheduled run so the schedule isn't disabled after 60 days without repo activity.
 
 ## Svelte 5 Patterns
 
@@ -107,8 +109,9 @@ Uses `uv` for Python (3.14) and `npm` for the gallery.
 - `gallery/src/lib/config.ts` — `SITE_NAME`, `SITE_SUBTITLE`, `EXCLUDED_TAGS`
 - `gallery/src/lib/stores/videos.svelte.ts` — singleton video store
 - `gallery/src/lib/components/Sidebar.svelte` — collections, sort, excluded-tags toggle
-- `gallery/src/lib/components/VideoCard.svelte` — `div[role="button"]` (NOT `<a>`), navigates to `/video/[id]`
-- `gallery/src/lib/components/HeroBanner.svelte` — `static/hero.jpg` with gradient fallback
+- `gallery/src/lib/components/VideoCard.svelte` — `div[role="button"]` (NOT `<a>`), navigates to `/video/[id]`; shows thumbnail, title, date and duration only (tags and view counts live on the detail page)
+- `gallery/src/lib/components/MemorySlot.svelte` — featured video at the top of the home page ("On this day" match on `videoDate`, otherwise a random pick); hidden while searching or filtering by collection
+- `gallery/src/routes/video/[id]/+page.svelte` — detail page; previous/next and "More from" use the first collection with other videos, falling back to the same year
 - `gallery/src/routes/video/[id]/+page.ts` — `export const prerender = false`
 
 ## E2E Tests (Playwright)

@@ -2,6 +2,8 @@
 	import { getContext } from 'svelte';
 	import { page } from '$app/state';
 	import type { Video } from '$lib/types';
+	import { EXCLUDED_TAGS } from '$lib/config';
+	import VideoCard from '$lib/components/VideoCard.svelte';
 
 	type VideoStore = {
 		videos: Video[];
@@ -36,10 +38,61 @@
 			: null
 	);
 
-	const viewCount = $derived(video ? Number(video.viewCount).toLocaleString() : '');
+	const sortTime = (v: Video) => new Date(v.videoDate ?? v.uploadDate).getTime();
+	const isExcluded = (v: Video) => v.tags.some((t) => EXCLUDED_TAGS.includes(t));
+
+	type Context = { label: string; href: string | null; videos: Video[] };
+
+	// The set this video is browsed within: the first of its collections that
+	// has other videos, otherwise the other videos from the same year.
+	const context = $derived.by<Context | null>(() => {
+		const current = video;
+		if (!current) return null;
+		const pool = isExcluded(current) ? store.videos : store.videos.filter((v) => !isExcluded(v));
+		const oldestFirst = (vs: Video[]) => [...vs].sort((a, b) => sortTime(a) - sortTime(b));
+
+		for (const playlist of current.playlists) {
+			const members = pool.filter((v) => v.playlists.some((p) => p.id === playlist.id));
+			if (members.length > 1) {
+				return {
+					label: playlist.title,
+					href: `/?collection=${encodeURIComponent(playlist.title)}`,
+					videos: oldestFirst(members)
+				};
+			}
+		}
+
+		const year = new Date(sortTime(current)).getFullYear();
+		const sameYear = pool.filter((v) => new Date(sortTime(v)).getFullYear() === year);
+		if (sameYear.length > 1) {
+			return { label: String(year), href: null, videos: oldestFirst(sameYear) };
+		}
+		return null;
+	});
+
+	const position = $derived(context ? context.videos.findIndex((v) => v.id === videoId) : -1);
+	const prevVideo = $derived(context && position > 0 ? context.videos[position - 1] : null);
+	const nextVideo = $derived(
+		context && position >= 0 && position < context.videos.length - 1
+			? context.videos[position + 1]
+			: null
+	);
+	const moreVideos = $derived.by<Video[]>(() => {
+		if (!context) return [];
+		return context.videos
+			.filter((v) => v.id !== videoId)
+			.reverse()
+			.slice(0, 4);
+	});
 
 	let playing = $state(false);
 	let copied = $state(false);
+
+	// Moving to another video reuses this page, so stop the previous player.
+	$effect(() => {
+		videoId;
+		playing = false;
+	});
 
 	function copyLink() {
 		const url = `https://www.youtube.com/watch?v=${video?.id}`;
@@ -136,38 +189,82 @@
 				{/if}
 			</div>
 
+			{#if prevVideo || nextVideo}
+				<nav class="prev-next" aria-label="Previous and next in {context?.label}">
+					{#if prevVideo}
+						<a href="/video/{prevVideo.id}" class="step-link">
+							<svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+							</svg>
+							<span class="step-text">
+								<span class="step-label">Previous in {context?.label}</span>
+								<span class="step-title">{prevVideo.title}</span>
+							</span>
+						</a>
+					{/if}
+					{#if nextVideo}
+						<a href="/video/{nextVideo.id}" class="step-link step-next">
+							<span class="step-text">
+								<span class="step-label">Next in {context?.label}</span>
+								<span class="step-title">{nextVideo.title}</span>
+							</span>
+							<svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+							</svg>
+						</a>
+					{/if}
+				</nav>
+			{/if}
+
 			<!-- Metadata -->
 			<div class="meta-card">
 				<h1 class="video-title">{video.title}</h1>
 
 				<div class="meta-row">
-					<span>Uploaded {uploadDate}</span>
 					{#if videoDateFormatted}
-						<span>·</span>
 						<span>Filmed {videoDateFormatted}</span>
+					{:else}
+						<span>Uploaded {uploadDate}</span>
 					{/if}
-					<span>·</span>
-					<span>{viewCount} views</span>
+					{#if video.duration}
+						<span>·</span>
+						<span>{video.duration}</span>
+					{/if}
 				</div>
 
 				{#if video.playlists.length > 0 || video.tags.length > 0}
 					<div class="tags-row">
 						{#each video.playlists as playlist (playlist.id)}
-							<span class="tag tag-accent">{playlist.title}</span>
+							<a href="/?collection={encodeURIComponent(playlist.title)}" class="tag tag-accent">{playlist.title}</a>
 						{/each}
 						{#each video.tags as tag (tag)}
-							<span class="tag">#{tag}</span>
+							<a href="/?q={encodeURIComponent(tag)}" class="tag">#{tag}</a>
 						{/each}
 					</div>
 				{/if}
 
 				{#if video.description}
 					<div class="description">
-						<p class="description-label">Description</p>
 						<p class="description-text">{video.description}</p>
 					</div>
 				{/if}
 			</div>
+
+			{#if moreVideos.length > 0 && context}
+				<section class="more">
+					<div class="more-head">
+						<h2 class="more-title">More from {context.label}</h2>
+						{#if context.href}
+							<a href={context.href} class="more-all">See all {context.videos.length}</a>
+						{/if}
+					</div>
+					<div class="more-grid">
+						{#each moreVideos as other (other.id)}
+							<VideoCard video={other} />
+						{/each}
+					</div>
+				</section>
+			{/if}
 		{/if}
 	</div>
 </div>
@@ -324,15 +421,95 @@
 
 	.tag {
 		display: inline-block;
+		text-decoration: none;
 		background: var(--color-surface-alt);
-		color: var(--color-text-soft);
+		color: var(--color-text);
 		border-radius: 999px;
 		padding: 3px 12px;
 		font-size: var(--text-small);
 	}
 	.tag-accent {
-		background: color-mix(in srgb, var(--color-accent) 15%, transparent);
-		color: var(--color-accent);
+		background: var(--color-text);
+		color: var(--color-bg);
+	}
+
+	.prev-next {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		gap: 12px;
+		margin-top: 16px;
+	}
+
+	.step-link {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		min-height: 64px;
+		padding: 10px 16px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius);
+		color: var(--color-text-soft);
+		text-decoration: none;
+		transition: background var(--transition-fast);
+	}
+	.step-link:hover {
+		background: var(--color-surface);
+	}
+	.step-next {
+		justify-content: flex-end;
+		text-align: right;
+	}
+
+	.step-text {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+
+	.step-label {
+		font-size: 12px;
+		color: var(--color-text-soft);
+	}
+
+	.step-title {
+		font-family: var(--font-heading);
+		font-size: 0.9375rem;
+		font-weight: 600;
+		line-height: 1.35;
+		color: var(--color-text);
+	}
+
+	.more {
+		margin-top: 32px;
+	}
+
+	.more-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 8px;
+		margin-bottom: 12px;
+	}
+
+	.more-title {
+		font-family: var(--font-heading);
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-text);
+	}
+
+	.more-all {
+		font-size: var(--text-small);
+		font-weight: 500;
+		color: var(--color-text);
+		text-decoration: underline;
+	}
+
+	.more-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+		gap: 20px 12px;
 	}
 
 	.description {
@@ -341,13 +518,6 @@
 		border-top: 1px solid var(--color-border);
 	}
 
-	.description-label {
-		font-size: var(--text-small);
-		font-weight: 600;
-		color: var(--color-text-soft);
-		margin-bottom: 8px;
-		letter-spacing: 0.02em;
-	}
 
 	.description-text {
 		font-size: var(--text-small);

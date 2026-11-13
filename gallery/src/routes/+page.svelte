@@ -5,7 +5,7 @@
 	import type { Video, PlaylistRef } from '$lib/types';
 	import { EXCLUDED_TAGS } from '$lib/config';
 	import Sidebar from '$lib/components/Sidebar.svelte';
-	import HeroBanner from '$lib/components/HeroBanner.svelte';
+	import MemorySlot from '$lib/components/MemorySlot.svelte';
 	import SearchBar from '$lib/components/SearchBar.svelte';
 	import VideoCard from '$lib/components/VideoCard.svelte';
 
@@ -89,14 +89,13 @@
 		return counts;
 	});
 
-	const filteredVideos = $derived.by<Video[]>(() => {
-		let result = store.videos;
+	const visibleVideos = $derived.by<Video[]>(() => {
+		if (showExcluded || EXCLUDED_TAGS.length === 0) return store.videos;
+		return store.videos.filter((v) => !v.tags.some((t) => EXCLUDED_TAGS.includes(t)));
+	});
 
-		if (!showExcluded && EXCLUDED_TAGS.length > 0) {
-			result = result.filter(
-				(v) => !v.tags.some((t) => EXCLUDED_TAGS.includes(t))
-			);
-		}
+	const filteredVideos = $derived.by<Video[]>(() => {
+		let result = visibleVideos;
 
 		if (selectedCollection) {
 			result = result.filter((v) => v.playlists.some((p) => p.title === selectedCollection));
@@ -247,7 +246,7 @@
 		<!-- Scrollable content -->
 		<div class="main-content flex-1 overflow-y-auto">
 			{#if showHero}
-				<HeroBanner />
+				<MemorySlot videos={visibleVideos} />
 			{/if}
 
 			<div class="p-4">
@@ -260,7 +259,7 @@
 				{:else if sortBy === 'title'}
 					<div class={gridClass}>
 						{#each filteredVideos as video (video.id)}
-							<VideoCard {video} {density} onTagClick={(tag) => (searchQuery = tag)} />
+							<VideoCard {video} {density} />
 						{/each}
 					</div>
 				{:else}
@@ -272,7 +271,7 @@
 							</div>
 							<div class={gridClass}>
 								{#each group.videos as video (video.id)}
-									<VideoCard {video} {density} onTagClick={(tag) => (searchQuery = tag)} />
+									<VideoCard {video} {density} />
 								{/each}
 							</div>
 						</div>

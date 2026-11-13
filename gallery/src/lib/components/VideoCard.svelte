@@ -4,12 +4,10 @@
 
 	let {
 		video,
-		density = 'medium',
-		onTagClick
+		density = 'medium'
 	}: {
 		video: Video;
 		density?: 'large' | 'medium' | 'list';
-		onTagClick?: (tag: string) => void;
 	} = $props();
 
 	const thumbnail = $derived(video.thumbnails.standard ?? video.thumbnails.high);
@@ -22,17 +20,8 @@
 		})
 	);
 
-	const viewCount = $derived(Number(video.viewCount).toLocaleString());
-	const visibleTags = $derived(video.tags.slice(0, 3));
-	const extraTagCount = $derived(Math.max(0, video.tags.length - 3));
-
 	function navigate() {
 		goto(`/video/${video.id}`);
-	}
-
-	function handleTagClick(e: MouseEvent, tag: string) {
-		e.stopPropagation();
-		onTagClick?.(tag);
 	}
 </script>
 
@@ -40,7 +29,7 @@
 	<div
 		role="button"
 		tabindex="0"
-		class="video-card flex cursor-pointer gap-4 p-3"
+		class="video-card list-card flex cursor-pointer gap-4 p-3"
 		onclick={navigate}
 		onkeydown={(e) => e.key === 'Enter' && navigate()}
 	>
@@ -59,78 +48,65 @@
 		{/if}
 		<div class="min-w-0 flex-1 py-1">
 			<h3 class="card-title line-clamp-2">{video.title}</h3>
-			<div class="mt-1 flex items-center gap-3 meta-text">
-				<span>{date}</span>
-				<span>{viewCount} views</span>
-			</div>
-			{#if video.tags.length > 0}
-				<div class="mt-2 flex flex-wrap gap-1">
-					{#each visibleTags as tag (tag)}
-						<button onclick={(e) => handleTagClick(e, tag)} class="tag">#{tag}</button>
-					{/each}
-					{#if extraTagCount > 0}
-						<span class="meta-text">+{extraTagCount}</span>
-					{/if}
-				</div>
-			{/if}
+			<p class="meta-text mt-1">{date}</p>
 		</div>
 	</div>
 {:else}
 	<div
 		role="button"
 		tabindex="0"
-		class="video-card cursor-pointer overflow-hidden"
+		class="video-card grid-card cursor-pointer"
 		onclick={navigate}
 		onkeydown={(e) => e.key === 'Enter' && navigate()}
 	>
-		{#if thumbnail}
-			<div class="relative">
+		<div class="thumb relative overflow-hidden">
+			{#if thumbnail}
 				<img
 					src={thumbnail.url}
 					alt={video.title}
 					class="aspect-video w-full object-cover"
 					loading="lazy"
 				/>
-				{#if video.duration}
-					<span class="duration-badge">{video.duration}</span>
-				{/if}
-			</div>
-		{/if}
-		<div class="space-y-1.5 p-3">
-			<h3 class="card-title line-clamp-2 text-sm">{video.title}</h3>
-			<div class="meta-text flex items-center gap-3 text-xs">
-				<span>{date}</span>
-				<span>{viewCount} views</span>
-			</div>
-			{#if video.tags.length > 0}
-				<div class="flex flex-wrap gap-1">
-					{#each visibleTags as tag (tag)}
-						<button onclick={(e) => handleTagClick(e, tag)} class="tag">#{tag}</button>
-					{/each}
-					{#if extraTagCount > 0}
-						<span class="meta-text text-xs">+{extraTagCount}</span>
-					{/if}
-				</div>
+			{:else}
+				<div class="aspect-video w-full"></div>
 			{/if}
+			{#if video.duration}
+				<span class="duration-badge">{video.duration}</span>
+			{/if}
+		</div>
+		<div class="px-0.5 pt-2">
+			<h3 class="card-title line-clamp-2">{video.title}</h3>
+			<p class="meta-text text-xs">{date}</p>
 		</div>
 	</div>
 {/if}
 
 <style>
-	.video-card {
+	.list-card {
 		background: var(--color-surface);
 		border-radius: var(--radius);
 		box-shadow: var(--shadow-soft);
 		transition: transform var(--transition-base), box-shadow var(--transition-base);
 	}
-	.video-card:hover {
+	.list-card:hover {
+		transform: translateY(-2px);
+		box-shadow: var(--shadow-lift);
+	}
+
+	.thumb {
+		background: var(--color-surface-alt);
+		border-radius: var(--radius);
+		box-shadow: var(--shadow-soft);
+		transition: transform var(--transition-base), box-shadow var(--transition-base);
+	}
+	.grid-card:hover .thumb {
 		transform: translateY(-2px);
 		box-shadow: var(--shadow-lift);
 	}
 
 	.card-title {
 		font-family: var(--font-heading);
-		font-size: 0.9rem;
+		font-size: 0.9375rem;
 		font-weight: 600;
 		color: var(--color-text);
 		line-height: 1.35;
@@ -150,19 +126,5 @@
 		border-radius: 4px;
 		padding: 2px 6px;
 		font-size: 11px;
-	}
-
-	.tag {
-		display: inline-block;
-		background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-		color: var(--color-accent);
-		border-radius: 999px;
-		padding: 2px 8px;
-		font-size: 11px;
-		cursor: pointer;
-		transition: background var(--transition-fast);
-	}
-	.tag:hover {
-		background: color-mix(in srgb, var(--color-accent) 22%, transparent);
 	}
 </style>
