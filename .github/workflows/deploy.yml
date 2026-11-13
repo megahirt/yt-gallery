@@ -1,18 +1,28 @@
-name: Deploy to GitHub Pages
+name: Fetch videos and deploy to GitHub Pages
+
+# One workflow does everything, so videos.json always ships with the site
+# (same origin, no cross-origin fetch, no artifact handoff between workflows).
+#
+# - schedule / manual: refresh videos.json, rebuild the latest v* release
+# - push of a v* tag:  release new gallery code (with fresh videos.json)
 
 on:
+  schedule:
+    - cron: "0 4 * * *" # daily at 04:00 UTC
+  workflow_dispatch:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
 
 permissions:
+  contents: read
   pages: write
   id-token: write
+  actions: write # keepalive step re-enables this workflow
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -24,6 +34,51 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # need tags to find the latest release
+
+      - name: Check out the release to build
+        id: release
+        # Tag pushes build that tag. Scheduled/manual runs build the newest
+        # v* tag, so unreleased commits on main never go live.
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            tag="${{ github.ref_name }}"
+          else
+            tag="$(git tag -l 'v*' --sort=-v:refname | head -n 1)"
+          fi
+          if [ -z "$tag" ]; then
+            echo "No v* tag found to build" >&2
+            exit 1
+          fi
+          git checkout --detach "$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - uses: astral-sh/setup-uv@v8.0.0
+
+      - name: Write credentials from secrets
+        # Single quotes around the secret prevent the shell from interpreting
+        # JSON special characters (braces, quotes, etc.)
+        working-directory: fetch
+        run: |
+          echo '${{ secrets.YOUTUBE_TOKEN_JSON }}' > token.json
+          echo '${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}' > client_secret.json
+
+      - name: Fetch videos
+        id: fetch
+        continue-on-error: true # fall back to the live copy below
+        working-directory: fetch
+        run: |
+          uv run fetch_videos.py
+          uv run make_simple_video_list.py
+          cp videos.json ../gallery/static/videos.json
+
+      - uses: actions/configure-pages@v5
+        id: pages
+
+      - name: Fall back to the currently deployed videos.json
+        if: steps.fetch.outcome == 'failure'
+        run: curl -fsSL "${{ steps.pages.outputs.base_url }}/videos.json" -o gallery/static/videos.json
 
       - uses: actions/setup-node@v6
         with:
@@ -35,27 +90,12 @@ jobs:
         run: npm ci
         working-directory: gallery
 
-      - name: Download videos.json artifact
-        uses: dawidd6/action-download-artifact@v20
-        with:
-          workflow: fetch-videos.yml
-          name: videos-json
-          path: gallery/static
-          if_no_artifact_found: warn
-
-      - name: Ensure videos.json exists
-        run: |
-          if [ ! -f gallery/static/videos.json ]; then
-            echo '[]' > gallery/static/videos.json
-          fi
-
       - name: Build
         run: npm run build
         working-directory: gallery
         env:
           BASE_PATH: /yt-gallery
-          VITE_PUBLISHED_VIDEOS_URL: ${{ vars.PUBLISHED_VIDEOS_URL }}
-          PUBLIC_BUILD_VERSION: ${{ github.ref_name }}
+          PUBLIC_BUILD_VERSION: ${{ steps.release.outputs.tag }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5.0.0
@@ -65,3 +105,21 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Keep the schedule alive
+        # GitHub disables scheduled workflows after 60 days without repo
+        # activity; re-enabling the workflow resets that timer.
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/deploy.yml/enable"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Fail the run if the YouTube fetch failed
+        # The site was still deployed with the previous data; failing here
+        # makes GitHub send the failure email (usually an expired OAuth token:
+        # run `uv run login.py` and update the YOUTUBE_TOKEN_JSON secret).
+        if: steps.fetch.outcome == 'failure'
+        run: |
+          echo "::error::YouTube fetch failed; site redeployed with previous videos.json"
+          exit 1
