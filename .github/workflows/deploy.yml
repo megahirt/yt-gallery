@@ -73,7 +73,7 @@ jobs:
           uv run make_simple_video_list.py
           cp videos.json ../gallery/static/videos.json
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
         id: pages
 
       - name: Fall back to the currently deployed videos.json
@@ -104,7 +104,7 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
       - name: Keep the schedule alive
         # GitHub disables scheduled workflows after 60 days without repo
