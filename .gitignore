@@ -28,3 +28,6 @@ gallery/build/
 gallery/.svelte-kit/
 gallery/static/videos.json
 gallery/static/sample/
+site_review.html
+sil_videos.csv
+fetch/catalog/

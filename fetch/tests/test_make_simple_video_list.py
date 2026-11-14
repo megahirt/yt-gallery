@@ -436,3 +436,65 @@ class TestSites:
         sil = json.loads((tmp_path / "videos_sil.json").read_text())
         assert [v["id"] for v in family] == ["fam1"]
         assert [v["id"] for v in sil] == ["sil1"]
+
+
+# ---------------------------------------------------------------------------
+# Catalog
+# ---------------------------------------------------------------------------
+
+class TestCatalog:
+    def test_missing_catalog_is_empty_locally(self, tmp_path, monkeypatch):
+        import make_simple_video_list as msl
+
+        monkeypatch.setattr(msl, "CATALOG_FILE", tmp_path / "catalog.json")
+        monkeypatch.delenv("REQUIRE_CATALOG", raising=False)
+        assert msl.load_catalog() == {}
+
+    def test_missing_catalog_fails_when_required(self, tmp_path, monkeypatch):
+        import make_simple_video_list as msl
+
+        monkeypatch.setattr(msl, "CATALOG_FILE", tmp_path / "catalog.json")
+        monkeypatch.setenv("REQUIRE_CATALOG", "1")
+        with pytest.raises(FileNotFoundError, match="Catalog not found"):
+            msl.load_catalog()
+
+    def test_catalog_site_overrides_tag_rule(self):
+        import make_simple_video_list as msl
+
+        video = msl.simplify_video(make_raw_video(video_id="v1", tags=["work"]), {})
+        assert msl.apply_catalog(video, {"v1": {"site": "family"}})["site"] == "family"
+
+    def test_only_published_fields_are_copied(self):
+        import make_simple_video_list as msl
+
+        video = msl.simplify_video(make_raw_video(video_id="v1"), {})
+        entry = {"people": ["Nana"], "summary": "A visit", "transcript": "private words"}
+        result = msl.apply_catalog(video, {"v1": entry})
+        assert result["people"] == ["Nana"]
+        assert result["summary"] == "A visit"
+        assert "transcript" not in result
+
+    def test_video_without_catalog_entry_is_unchanged(self):
+        import make_simple_video_list as msl
+
+        video = msl.simplify_video(make_raw_video(video_id="v1"), {})
+        assert msl.apply_catalog(dict(video), {"other": {"site": "sil"}}) == video
+
+    def test_unknown_site_in_catalog_fails(self, tmp_path, monkeypatch):
+        import make_simple_video_list as msl
+
+        (tmp_path / "videos_full.json").write_text(
+            json.dumps([make_raw_video(video_id="v1", high_thumb=THUMB_HIGH)])
+        )
+        (tmp_path / "playlists_full.json").write_text(
+            json.dumps({"playlists": [], "memberships": []})
+        )
+        (tmp_path / "catalog.json").write_text(json.dumps({"v1": {"site": "typo"}}))
+        monkeypatch.setattr(msl, "VIDEOS_FULL_FILE", tmp_path / "videos_full.json")
+        monkeypatch.setattr(msl, "PLAYLISTS_FULL_FILE", tmp_path / "playlists_full.json")
+        monkeypatch.setattr(msl, "OUTPUT_FILE", tmp_path / "videos.json")
+        monkeypatch.setattr(msl, "PRIVATE_FILE", tmp_path / "videos_private.json")
+        monkeypatch.setattr(msl, "CATALOG_FILE", tmp_path / "catalog.json")
+
+        with pytest.raises(ValueError, match="unknown site"):
+            msl.main()

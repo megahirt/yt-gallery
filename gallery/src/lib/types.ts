@@ -29,4 +29,8 @@ export interface Video {
 	duration?: string;
 	/** Which site the video belongs to; each site's videos.json holds only its own. */
 	site?: string;
+	/** From the private catalog, when present. */
+	people?: string[];
+	places?: string[];
+	summary?: string;
 }

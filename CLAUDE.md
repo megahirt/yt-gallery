@@ -93,6 +93,7 @@ Uses `uv` for Python (3.14) and `npm` for the gallery.
 - Dates go through `src/lib/dates.ts`: `videoDate` is a calendar day stored as midnight UTC and must be formatted in UTC; `uploadDate` is shown in local time
 - `npm run sample-data` (`scripts/make-sample-data.mjs`) writes a made-up library to `static/sample/` (gitignored); `VITE_VIDEOS_PATH` points the store at it
 - Sites: every video belongs to one site (`site_for` / `SITE_TAGS` in `fetch/make_simple_video_list.py`; default `family`, tag `work` → `sil`). The pipeline writes `videos.json` for the default site and `videos_<site>.json` for the others, so a site's published data never lists another site's videos. The gallery shows everything in the file it is given; `VITE_SITE_NAME` / `VITE_SITE_SUBTITLE` override the name at build time
+- Catalog: metadata YouTube has no field for lives in the private `megahirt/yt-gallery-catalog` repo (`catalog.json`, keyed by video ID), cloned to `fetch/catalog/` (gitignored; optional locally). `make_simple_video_list.py` copies only `CATALOG_FIELDS` (`site`, `people`, `places`, `summary`) into the published lists; a catalog `site` overrides the tag rule. The deploy reads it with the read-only `CATALOG_DEPLOY_KEY` secret and sets `REQUIRE_CATALOG=1`, so a missing catalog counts as a failed fetch
 - The site is kept out of search engines: `noindex` meta tag in `app.html`, and `static/robots.txt` blocks `/videos.json` (pages stay crawlable so the `noindex` is seen)
 
 ### CI/CD

@@ -64,10 +64,24 @@ jobs:
           echo '${{ secrets.YOUTUBE_TOKEN_JSON }}' > token.json
           echo '${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}' > client_secret.json
 
+      - name: Check out the private catalog
+        # Metadata YouTube has no field for (site, people, places, ...) lives
+        # in the private yt-gallery-catalog repo, read with a read-only deploy
+        # key. If this fails, the fetch step fails too (REQUIRE_CATALOG) and
+        # the run falls back to the live videos.json.
+        continue-on-error: true
+        uses: actions/checkout@v6
+        with:
+          repository: megahirt/yt-gallery-catalog
+          ssh-key: ${{ secrets.CATALOG_DEPLOY_KEY }}
+          path: fetch/catalog
+
       - name: Fetch videos
         id: fetch
         continue-on-error: true # fall back to the live copy below
         working-directory: fetch
+        env:
+          REQUIRE_CATALOG: "1"
         run: |
           uv run fetch_videos.py
           uv run make_simple_video_list.py
@@ -118,8 +132,9 @@ jobs:
       - name: Fail the run if the YouTube fetch failed
         # The site was still deployed with the previous data; failing here
         # makes GitHub send the failure email (usually an expired OAuth token:
-        # run `uv run login.py` and update the YOUTUBE_TOKEN_JSON secret).
+        # run `uv run login.py` and update the YOUTUBE_TOKEN_JSON secret; or
+        # the catalog checkout failed: check the CATALOG_DEPLOY_KEY secret).
         if: steps.fetch.outcome == 'failure'
         run: |
-          echo "::error::YouTube fetch failed; site redeployed with previous videos.json"
+          echo "::error::YouTube fetch or catalog checkout failed; site redeployed with previous videos.json"
           exit 1

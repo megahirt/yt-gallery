@@ -5,6 +5,7 @@ See MAPPINGS.md for the full field mapping reference.
 """
 
 import json
+import os
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -14,6 +15,15 @@ VIDEOS_FULL_FILE = HERE / "videos_full.json"
 PLAYLISTS_FULL_FILE = HERE / "playlists_full.json"
 OUTPUT_FILE = HERE / "videos.json"
 PRIVATE_FILE = HERE / "videos_private.json"
+
+# The catalog holds the metadata YouTube has no field for, keyed by video ID.
+# It lives in the private yt-gallery-catalog repo, checked out at fetch/catalog.
+# It is optional locally; the deploy sets REQUIRE_CATALOG=1 so that a missing
+# catalog fails the run instead of publishing a site without it.
+CATALOG_FILE = HERE / "catalog" / "catalog.json"
+# Only these catalog fields are copied into the published video lists.
+# Anything else in the catalog stays private.
+CATALOG_FIELDS = ("site", "people", "places", "summary")
 
 # Every video belongs to exactly one site, and each site gets its own output
 # file, so a site's published videos.json never lists another site's videos.
@@ -72,6 +82,27 @@ def format_duration(iso_duration):
     return f"{minutes}:{seconds:02d}"
 
 
+def load_catalog():
+    """Return {video_id: {field: value}} from the catalog, or {} if absent."""
+    if not CATALOG_FILE.exists():
+        if os.environ.get("REQUIRE_CATALOG"):
+            raise FileNotFoundError(f"Catalog not found: {CATALOG_FILE}")
+        return {}
+    return json.loads(CATALOG_FILE.read_text())
+
+
+def apply_catalog(video, catalog):
+    """Copy the published catalog fields for this video onto it.
+
+    A `site` in the catalog overrides the one derived from the tags.
+    """
+    entry = catalog.get(video["id"], {})
+    for field in CATALOG_FIELDS:
+        if entry.get(field):
+            video[field] = entry[field]
+    return video
+
+
 def simplify_video(item, membership_lookup):
     video_id = item["id"]
     snippet = item["snippet"]
@@ -121,12 +152,21 @@ def main():
     playlists_full = json.loads(PLAYLISTS_FULL_FILE.read_text())
 
     membership_lookup = build_membership_lookup(playlists_full)
-    simplified = [simplify_video(item, membership_lookup) for item in videos_full]
+    catalog = load_catalog()
+    simplified = [
+        apply_catalog(simplify_video(item, membership_lookup), catalog)
+        for item in videos_full
+    ]
 
     public = [v for v in simplified if v["privacyStatus"] != "private"]
     private = [v for v in simplified if v["privacyStatus"] == "private"]
 
-    for site in [DEFAULT_SITE, *SITE_TAGS]:
+    sites = [DEFAULT_SITE, *SITE_TAGS]
+    unknown = sorted({v["site"] for v in public} - set(sites))
+    if unknown:
+        raise ValueError(f"Catalog uses unknown site(s): {', '.join(unknown)}")
+
+    for site in sites:
         site_videos = [v for v in public if v["site"] == site]
         output_file = site_output_file(site)
         output_file.write_text(json.dumps(site_videos, indent=2))
