@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Video } from '$lib/types';
+	import { base } from '$app/paths';
 	import { formatVideoDate, videoYear } from '$lib/dates';
 
 	let { videos }: { videos: Video[] } = $props();
@@ -57,7 +58,7 @@
 
 {#if memory}
 	<section class="memory" aria-label="Featured memory">
-		<a href="/video/{memory.video.id}" class="memory-thumb" aria-label="Watch {memory.video.title}">
+		<a href="{base}/video/{memory.video.id}" class="memory-thumb" aria-label="Watch {memory.video.title}">
 			{#if thumbnail}
 				<img src={thumbnail.url} alt="" class="memory-img" />
 			{/if}
@@ -76,7 +77,7 @@
 			<h1 class="memory-title">{memory.video.title}</h1>
 			<p class="memory-meta">{meta}</p>
 			<div class="memory-actions">
-				<a href="/video/{memory.video.id}" class="memory-btn memory-btn-primary">
+				<a href="{base}/video/{memory.video.id}" class="memory-btn memory-btn-primary">
 					<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 						<path d="M8 5v14l11-7z" />
 					</svg>

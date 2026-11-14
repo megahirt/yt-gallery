@@ -6,8 +6,12 @@ declare const self: ServiceWorkerGlobalScope;
 
 const CACHE = `gallery-${version}`;
 
+// Data files change with every deploy and must always come from the network.
+// Paths carry the site's base path (e.g. /work/videos.json), so match the name.
+const isData = (path: string) => path.endsWith('/videos.json') || path.endsWith('/sites.json');
+
 // Static assets and build output to precache
-const ASSETS = [...build, ...files];
+const ASSETS = [...build, ...files].filter((path) => !isData(path));
 
 self.addEventListener('install', (event) => {
 	event.waitUntil(
@@ -30,8 +34,7 @@ self.addEventListener('fetch', (event) => {
 
 	const url = new URL(event.request.url);
 
-	// Don't cache videos.json — always fetch fresh
-	if (url.pathname === '/videos.json') return;
+	if (isData(url.pathname)) return;
 
 	// For cached assets: cache-first
 	if (ASSETS.includes(url.pathname)) {

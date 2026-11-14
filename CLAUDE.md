@@ -62,7 +62,8 @@ cd gallery
 npm install                      # Install dependencies
 npm run dev                      # Dev server (http://localhost:5173)
 npm run dev:sample               # Dev server on :5174 with a generated sample library (thumbnails, dates, durations)
-npm run build                    # Static build → gallery/build/
+npm run build                    # Static build of one site → gallery/build/
+npm run build:sites              # All sites → gallery/build-sites/ (what the deploy publishes; needs ../fetch/sites.json)
 npm run preview                  # Preview production build
 npm run check                    # Type check (svelte-kit sync + svelte-check)
 npm run test:e2e                 # Playwright e2e tests
@@ -92,15 +93,18 @@ Uses `uv` for Python (3.14) and `npm` for the gallery.
 - Search filters across title, description, tags, and playlist names
 - Dates go through `src/lib/dates.ts`: `videoDate` is a calendar day stored as midnight UTC and must be formatted in UTC; `uploadDate` is shown in local time
 - `npm run sample-data` (`scripts/make-sample-data.mjs`) writes a made-up library to `static/sample/` (gitignored); `VITE_VIDEOS_PATH` points the store at it
-- Sites: every video belongs to one site (`site_for` / `SITE_TAGS` in `fetch/make_simple_video_list.py`; default `family`, tag `work` → `sil`). The pipeline writes `videos.json` for the default site and `videos_<site>.json` for the others, so a site's published data never lists another site's videos. The gallery shows everything in the file it is given; `VITE_SITE_NAME` / `VITE_SITE_SUBTITLE` override the name at build time
-- Catalog: metadata YouTube has no field for lives in the private `megahirt/yt-gallery-catalog` repo (`catalog.json`, keyed by video ID), cloned to `fetch/catalog/` (gitignored; optional locally). `make_simple_video_list.py` copies only `CATALOG_FIELDS` (`site`, `people`, `places`, `summary`) into the published lists; a catalog `site` overrides the tag rule. The deploy reads it with the read-only `CATALOG_DEPLOY_KEY` secret and sets `REQUIRE_CATALOG=1`, so a missing catalog counts as a failed fetch
+- Sites: one domain hosts several sites — Family at `/`, Work at `/work/`, Other at `/other/` (`SITES` in `fetch/make_simple_video_list.py`). Every video belongs to one site: `site` in the catalog, else tag `work` → `work`, else `family`. The pipeline writes `videos.json` (default site), `videos_<site>.json` (the rest) and `sites.json` (id, label, title, path, count, file), so a site's published data never lists another site's videos
+- `npm run build:sites` (`scripts/build-sites.mjs`) builds each site that has videos into `gallery/build-sites/` with its own `BASE_PATH`, `VITE_SITE_ID` and `VITE_SITE_NAME`; this is what gets deployed. `--from-live <url>` builds from the deployed data instead of `../fetch`
+- GitHub Pages allows one `404.html` per domain, so each site's SvelteKit fallback is published as `app-shell.html` and the generated root `404.html` loads the shell of the site the path belongs to. Internal links must use `base` from `$app/paths` (`{base}/video/...`) or they break under `/work/`
+- `SiteSwitcher.svelte` (bottom of the sidebar) reads `/sites.json` from the domain root and links to the other sites that have videos; hidden when there is nothing to switch to (e.g. local dev)
+- Catalog: metadata YouTube has no field for lives in the private `megahirt/yt-gallery-catalog` repo (`catalog.json`, keyed by video ID), cloned to `fetch/catalog/` (gitignored; optional locally). `make_simple_video_list.py` copies only `CATALOG_FIELDS` (`site`, `people`, `places`, `summary`) into the published lists; a catalog `site` (`family`, `work` or `other`) overrides the tag rule. The deploy reads it with the read-only `CATALOG_DEPLOY_KEY` secret and sets `REQUIRE_CATALOG=1`, so a missing catalog counts as a failed fetch
 - The site is kept out of search engines: `noindex` meta tag in `app.html`, and `static/robots.txt` blocks `/videos.json` (pages stay crawlable so the `noindex` is seen)
 
 ### CI/CD
 
-- **deploy.yml** is the only workflow. It runs daily, on manual trigger, and on push of a `v*` tag. Each run fetches from the YouTube API, copies `videos.json` into `gallery/static/`, builds the gallery and deploys to GitHub Pages.
+- **deploy.yml** is the only workflow. It runs daily, on manual trigger, and on push of a `v*` tag. Each run fetches from the YouTube API, builds every site with `npm run build:sites` and deploys `gallery/build-sites/` to GitHub Pages.
 - Scheduled/manual runs build the **newest `v*` tag**, not `main` — gallery code (and the fetch scripts) only go live when a release is tagged. The `github-pages` environment allows `main` and `v*` refs.
-- If the YouTube fetch fails, the run redeploys with the `videos.json` from the live site and then fails, so GitHub sends a failure email (usually an expired OAuth token: `uv run login.py`, then update the `YOUTUBE_TOKEN_JSON` secret).
+- If the YouTube fetch fails, the run rebuilds from the data on the live site (`build:sites --from-live`) and then fails, so GitHub sends a failure email (usually an expired OAuth token: `uv run login.py`, then update the `YOUTUBE_TOKEN_JSON` secret).
 - A keepalive step re-enables the workflow on each scheduled run so the schedule isn't disabled after 60 days without repo activity.
 
 ## Svelte 5 Patterns
@@ -111,9 +115,10 @@ Uses `uv` for Python (3.14) and `npm` for the gallery.
 
 ## Key Files
 
-- `gallery/src/lib/config.ts` — `SITE_NAME`, `SITE_SUBTITLE` (overridable with `VITE_SITE_NAME` / `VITE_SITE_SUBTITLE`)
+- `gallery/src/lib/config.ts` — `SITE_ID`, `SITE_NAME`, `SITE_SUBTITLE` (set per site at build time with `VITE_SITE_ID` / `VITE_SITE_NAME` / `VITE_SITE_SUBTITLE`)
 - `gallery/src/lib/stores/videos.svelte.ts` — singleton video store
-- `gallery/src/lib/components/Sidebar.svelte` — collections, sort
+- `gallery/src/lib/components/Sidebar.svelte` — collections, sort, site switcher
+- `gallery/scripts/build-sites.mjs` — multi-site build and the root `404.html`
 - `gallery/src/lib/components/VideoCard.svelte` — `div[role="button"]` (NOT `<a>`), navigates to `/video/[id]`; shows thumbnail, title, date and duration only (tags and view counts live on the detail page)
 - `gallery/src/lib/components/MemorySlot.svelte` — featured video at the top of the home page ("On this day" match on `videoDate`, otherwise a random pick); hidden while searching or filtering by collection
 - `gallery/src/routes/video/[id]/+page.svelte` — detail page; previous/next and "More from" use the first collection with other videos, falling back to the same year

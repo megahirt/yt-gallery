@@ -2,6 +2,7 @@
 	import type { PlaylistRef } from '$lib/types';
 	import { SITE_NAME } from '$lib/config';
 	import { PUBLIC_BUILD_VERSION } from '$env/static/public';
+	import SiteSwitcher from './SiteSwitcher.svelte';
 
 	const version = PUBLIC_BUILD_VERSION || 'dev';
 
@@ -85,8 +86,10 @@
 		<p class="coming-soon">Coming soon</p>
 	</div>
 
-	<!-- Version -->
-	<div class="mt-auto border-t px-4 py-3" style="border-color: var(--color-border);">
+	<!-- Site switcher and version -->
+	<!-- Stays pinned to the bottom of the sidebar while the lists above scroll. -->
+	<div class="sidebar-footer mt-auto flex flex-col gap-3 border-t px-4 py-3" style="border-color: var(--color-border);">
+		<SiteSwitcher />
 		<p class="version">{version}</p>
 	</div>
 </aside>
@@ -95,6 +98,12 @@
 	.sidebar {
 		background: var(--color-surface);
 		border-right: 1px solid var(--color-border);
+	}
+
+	.sidebar-footer {
+		position: sticky;
+		bottom: 0;
+		background: var(--color-surface);
 	}
 
 	.logo-row {

@@ -19,6 +19,9 @@ videos_full.json
 playlists_full.json
 videos.json
 videos_*.json
+sites.json
+gallery/static/sites.json
+gallery/build-sites/
 recording_dates.csv
 tags.csv
 
@@ -31,3 +34,4 @@ gallery/static/sample/
 site_review.html
 sil_videos.csv
 fetch/catalog/
+gallery/.live-data/

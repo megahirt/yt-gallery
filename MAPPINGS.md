@@ -65,7 +65,7 @@ Produced by `make_simple_video_list.py` from `videos_full.json` + `playlists_ful
 | `videoDate` | `item["recordingDetails"]["recordingDate"]` | ISO 8601 datetime — when the video was filmed (set in YT Studio). `null` if not set |
 | `duration` | `item["contentDetails"]["duration"]` | Converted from ISO 8601 (`PT1H2M3S`) to `1:02:03` / `2:03`. `null` if absent |
 | `tags` | `item["snippet"]["tags"]` | Defaults to `[]` if absent |
-| `site` | — | Derived from the tags by `site_for`: `"sil"` if tagged `work`, otherwise `"family"`. Each site is written to its own file (`videos.json` for `family`, `videos_<site>.json` for the rest) |
+| `site` | — | `"family"`, `"work"` or `"other"`: the catalog's `site` if set, else `"work"` if tagged `work`, else `"family"`. Each site is written to its own file (`videos.json` for `family`, `videos_<site>.json` for the rest), and `sites.json` lists the sites with their video counts |
 | `people`, `places`, `summary` | catalog | Present only when the private catalog (`fetch/catalog/catalog.json`) has them for this video. A catalog `site` also overrides the derived one |
 | `privacyStatus` | `item["status"]["privacyStatus"]` | `"public"`, `"unlisted"`, or `"private"` |
 | `thumbnails.high` | `item["snippet"]["thumbnails"]["high"]` | Object with `url`, `width`, `height` |

@@ -5,6 +5,7 @@
 	import type { Video, PlaylistRef } from '$lib/types';
 	import { uploadYear, videoYear } from '$lib/dates';
 	import Sidebar from '$lib/components/Sidebar.svelte';
+	import { SITE_NAME } from '$lib/config';
 	import MemorySlot from '$lib/components/MemorySlot.svelte';
 	import SearchBar from '$lib/components/SearchBar.svelte';
 	import VideoCard from '$lib/components/VideoCard.svelte';
@@ -146,7 +147,7 @@
 </script>
 
 <svelte:head>
-	<title>MegaHirt Gallery</title>
+	<title>{SITE_NAME}</title>
 </svelte:head>
 
 <div class="flex h-screen" style="background: var(--color-bg);">

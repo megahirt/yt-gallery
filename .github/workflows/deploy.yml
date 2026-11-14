@@ -3,7 +3,7 @@ name: Fetch videos and deploy to GitHub Pages
 # One workflow does everything, so videos.json always ships with the site
 # (same origin, no cross-origin fetch, no artifact handoff between workflows).
 #
-# - schedule / manual: refresh videos.json, rebuild the latest v* release
+# - schedule / manual: refresh the video data, rebuild the latest v* release
 # - push of a v* tag:  release new gallery code (with fresh videos.json)
 
 on:
@@ -85,14 +85,9 @@ jobs:
         run: |
           uv run fetch_videos.py
           uv run make_simple_video_list.py
-          cp videos.json ../gallery/static/videos.json
 
       - uses: actions/configure-pages@v6
         id: pages
-
-      - name: Fall back to the currently deployed videos.json
-        if: steps.fetch.outcome == 'failure'
-        run: curl -fsSL "${{ steps.pages.outputs.base_url }}/videos.json" -o gallery/static/videos.json
 
       - uses: actions/setup-node@v6
         with:
@@ -104,17 +99,26 @@ jobs:
         run: npm ci
         working-directory: gallery
 
-      - name: Build
-        run: npm run build
+      # Every site (family at /, the others under their path) is built into
+      # gallery/build-sites and deployed as one Pages site.
+      - name: Build all sites
+        if: steps.fetch.outcome == 'success'
+        run: npm run build:sites
         working-directory: gallery
         env:
-          BASE_PATH: /yt-gallery
+          PUBLIC_BUILD_VERSION: ${{ steps.release.outputs.tag }}
+
+      - name: Build all sites from the currently deployed data
+        if: steps.fetch.outcome == 'failure'
+        run: npm run build:sites -- --from-live "${{ steps.pages.outputs.base_url }}"
+        working-directory: gallery
+        env:
           PUBLIC_BUILD_VERSION: ${{ steps.release.outputs.tag }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5.0.0
         with:
-          path: gallery/build
+          path: gallery/build-sites
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
+	import { SITE_NAME } from '$lib/config';
 	import type { Video } from '$lib/types';
 	import { formatFilmedDate, formatUploadDate, videoTime, videoYear } from '$lib/dates';
 	import VideoCard from '$lib/components/VideoCard.svelte';
@@ -41,7 +43,7 @@
 			if (members.length > 1) {
 				return {
 					label: playlist.title,
-					href: `/?collection=${encodeURIComponent(playlist.title)}`,
+					href: `${base}/?collection=${encodeURIComponent(playlist.title)}`,
 					videos: oldestFirst(members)
 				};
 			}
@@ -89,14 +91,14 @@
 </script>
 
 <svelte:head>
-	<title>{video?.title ?? 'Video'} — MegaHirt Gallery</title>
+	<title>{video?.title ?? 'Video'} — {SITE_NAME}</title>
 </svelte:head>
 
 <div class="page-shell">
 	<!-- Top bar -->
 	<div class="topbar">
 		<div class="topbar-inner">
-			<a href="/" class="back-link">
+			<a href="{base}/" class="back-link">
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 				</svg>
@@ -177,7 +179,7 @@
 			{#if prevVideo || nextVideo}
 				<nav class="prev-next" aria-label="Previous and next in {context?.label}">
 					{#if prevVideo}
-						<a href="/video/{prevVideo.id}" class="step-link">
+						<a href="{base}/video/{prevVideo.id}" class="step-link">
 							<svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
 								<path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
 							</svg>
@@ -188,7 +190,7 @@
 						</a>
 					{/if}
 					{#if nextVideo}
-						<a href="/video/{nextVideo.id}" class="step-link step-next">
+						<a href="{base}/video/{nextVideo.id}" class="step-link step-next">
 							<span class="step-text">
 								<span class="step-label">Next in {context?.label}</span>
 								<span class="step-title">{nextVideo.title}</span>
@@ -220,10 +222,10 @@
 				{#if video.playlists.length > 0 || video.tags.length > 0}
 					<div class="tags-row">
 						{#each video.playlists as playlist (playlist.id)}
-							<a href="/?collection={encodeURIComponent(playlist.title)}" class="tag tag-accent">{playlist.title}</a>
+							<a href="{base}/?collection={encodeURIComponent(playlist.title)}" class="tag tag-accent">{playlist.title}</a>
 						{/each}
 						{#each video.tags as tag (tag)}
-							<a href="/?q={encodeURIComponent(tag)}" class="tag">#{tag}</a>
+							<a href="{base}/?q={encodeURIComponent(tag)}" class="tag">#{tag}</a>
 						{/each}
 					</div>
 				{/if}

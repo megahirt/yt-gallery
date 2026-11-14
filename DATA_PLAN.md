@@ -12,7 +12,7 @@ To kick this off in a new session: "Read DATA_PLAN.md and start phase 0."
 2. Richer metadata: better tags, plus people, places and summaries.
 3. Tagging is mostly automatic (an LLM proposes, Chris approves).
 4. Each video belongs to a "site". `video.hirtfamily.net` shows family videos;
-   a companion site (e.g. `sil-videos.hirtfamily.net`) shows the SIL/work ones.
+   companion sites under the same domain (`/work/`, `/other/`) show the rest.
 5. About 300 older home videos that are not on YouTube yet get uploaded and
    categorized without it being a chore.
 
@@ -72,7 +72,7 @@ Today `work`-tagged videos are only hidden in the browser (`EXCLUDED_TAGS`), so
 they are still in the published `videos.json`. Fix that here.
 
 - Add a `site` value per video. Default `family`. Until the catalog exists,
-  derive it by rule (tag `work` → `sil`).
+  derive it by rule (tag `work` → `work`).
 - `make_simple_video_list.py` takes a site and writes only that site's videos.
 - The gallery reads its site name, title and subtitle from build-time config,
   so the same code can build either site.
@@ -144,16 +144,16 @@ blank sorting board.
 4. The tooling matches each upload to its local file by original filename and
    applies the approved metadata, then sets the final privacy (unlisted).
 
-### Phase 8: the companion site
+### Phase 8: the other sites (done differently than first planned)
 
-- GitHub Pages serves one site per repo, so the second site needs a thin second
-  public repo whose workflow checks out this repo and builds with the other
-  site's config, or a second host.
-- Add the custom domain and DNS record.
+All sites live under one domain instead of separate ones: Family at `/`, Work
+at `/work/`, Other at `/other/`, with a site switcher at the bottom of the
+sidebar. One deploy builds them all (`npm run build:sites`). A site appears
+once it has videos. Still to decide: what belongs on "Other".
 
 ## Open questions
 
-- Name of the private catalog repo and of the companion site.
+- What belongs on the "Other" site.
 - People tagging: local face clustering, or manual only?
 - Tag vocabulary: fixed list, or let the model suggest new tags for approval?
 - Which LLM for the analysis, and the budget for a full run (decide after the

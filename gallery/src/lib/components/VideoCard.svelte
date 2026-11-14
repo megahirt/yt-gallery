@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Video } from '$lib/types';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { formatVideoDate } from '$lib/dates';
 
 	let {
@@ -16,7 +17,7 @@
 	const date = $derived(formatVideoDate(video));
 
 	function navigate() {
-		goto(`/video/${video.id}`);
+		goto(`${base}/video/${video.id}`);
 	}
 </script>
 

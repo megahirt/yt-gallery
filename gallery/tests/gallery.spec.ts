@@ -422,3 +422,36 @@ test.describe('Video detail page', () => {
 		await expect(page.getByText(/Filmed/)).not.toBeVisible();
 	});
 });
+
+// ---------------------------------------------------------------------------
+// Site switcher
+// ---------------------------------------------------------------------------
+
+test.describe('Site switcher', () => {
+	const sites = [
+		{ id: 'family', label: 'Family', path: '', count: 3 },
+		{ id: 'work', label: 'Work', path: '/work', count: 2 },
+		{ id: 'other', label: 'Other', path: '/other', count: 0 },
+	];
+
+	test('links to the other sites that have videos and marks the current one', async ({ page }) => {
+		await mockVideos(page);
+		await page.route('**/sites.json', (route) => route.fulfill({ json: sites }));
+		await page.goto('/');
+
+		const switcher = page.getByRole('navigation', { name: 'Switch site' });
+		await expect(switcher.getByText('Family')).toHaveAttribute('aria-current', 'page');
+		await expect(switcher.getByRole('link', { name: 'Work' })).toHaveAttribute('href', '/work/');
+		// "Other" has no videos, so it is not offered.
+		await expect(switcher.getByText('Other')).toHaveCount(0);
+	});
+
+	test('is hidden when there is only one site', async ({ page }) => {
+		await mockVideos(page);
+		await page.route('**/sites.json', (route) => route.fulfill({ json: [sites[0]] }));
+		await page.goto('/');
+
+		await expect(page.locator('.grid [role="button"]').first()).toBeVisible();
+		await expect(page.getByRole('navigation', { name: 'Switch site' })).toHaveCount(0);
+	});
+});

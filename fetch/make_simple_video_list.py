@@ -1,6 +1,7 @@
 """
 Reads videos_full.json and playlists_full.json and writes one simplified video
-list per site: videos.json for the default site, videos_<site>.json for the rest.
+list per site (videos.json for the default site, videos_<site>.json for the
+rest) plus sites.json, the list of sites the gallery's site switcher shows.
 See MAPPINGS.md for the full field mapping reference.
 """
 
@@ -25,13 +26,24 @@ CATALOG_FILE = HERE / "catalog" / "catalog.json"
 # Anything else in the catalog stays private.
 CATALOG_FIELDS = ("site", "people", "places", "summary")
 
+SITES_FILE = HERE / "sites.json"
+
 # Every video belongs to exactly one site, and each site gets its own output
 # file, so a site's published videos.json never lists another site's videos.
-DEFAULT_SITE = "family"
+# All sites are served from one domain: the default site at the root, the
+# others under their path. `label` is the name in the site switcher, `title`
+# the name shown at the top of that site.
+SITES = [
+    {"id": "family", "label": "Family", "title": "MegaHirt Gallery", "path": ""},
+    {"id": "work", "label": "Work", "title": "MegaHirt Work Videos", "path": "/work"},
+    {"id": "other", "label": "Other", "title": "MegaHirt Other Videos", "path": "/other"},
+]
+DEFAULT_SITE = SITES[0]["id"]
 # A video carrying any of these tags belongs to that site instead of the
-# default one. Tags are compared case-insensitively.
+# default one, unless the catalog says otherwise. Tags are compared
+# case-insensitively.
 SITE_TAGS = {
-    "sil": ["work"],
+    "work": ["work"],
 }
 
 
@@ -161,16 +173,21 @@ def main():
     public = [v for v in simplified if v["privacyStatus"] != "private"]
     private = [v for v in simplified if v["privacyStatus"] == "private"]
 
-    sites = [DEFAULT_SITE, *SITE_TAGS]
-    unknown = sorted({v["site"] for v in public} - set(sites))
+    site_ids = [site["id"] for site in SITES]
+    unknown = sorted({v["site"] for v in public} - set(site_ids))
     if unknown:
         raise ValueError(f"Catalog uses unknown site(s): {', '.join(unknown)}")
 
-    for site in sites:
-        site_videos = [v for v in public if v["site"] == site]
-        output_file = site_output_file(site)
+    site_list = []
+    for site in SITES:
+        site_videos = [v for v in public if v["site"] == site["id"]]
+        output_file = site_output_file(site["id"])
         output_file.write_text(json.dumps(site_videos, indent=2))
-        print(f"Wrote {len(site_videos)} {site} videos → {output_file}")
+        print(f"Wrote {len(site_videos)} {site['id']} videos → {output_file}")
+        site_list.append({**site, "count": len(site_videos), "file": output_file.name})
+
+    SITES_FILE.write_text(json.dumps(site_list, indent=2))
+    print(f"Wrote {len(site_list)} sites → {SITES_FILE}")
 
     PRIVATE_FILE.write_text(json.dumps(private, indent=2))
     print(f"Wrote {len(private)} private videos → {PRIVATE_FILE}")
