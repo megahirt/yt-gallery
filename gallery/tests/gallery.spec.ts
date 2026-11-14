@@ -49,13 +49,12 @@ test.describe('Gallery page — video display', () => {
 		await expect(page.getByRole('complementary').getByText('MegaHirt Gallery')).toBeVisible();
 	});
 
-	test('displays a video card for each non-excluded video', async ({ page }) => {
+	test('displays a video card for each video', async ({ page }) => {
 		await mockVideos(page);
 		await page.goto('/');
 
-		// birthdayVid2 has the 'work' tag and is excluded by default
 		const cards = page.locator('.grid [role="button"]');
-		await expect(cards).toHaveCount(sampleVideos.length - 1);
+		await expect(cards).toHaveCount(sampleVideos.length);
 	});
 
 	test('shows video titles in the cards', async ({ page }) => {
@@ -131,42 +130,6 @@ test.describe('Gallery page — video display', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Excluded tags filter
-// ---------------------------------------------------------------------------
-
-test.describe('Gallery page — excluded tags filter', () => {
-	test('hides videos with excluded tags by default', async ({ page }) => {
-		await mockVideos(page);
-		await page.goto('/');
-
-		// birthdayVid2 has 'work' tag — should be hidden
-		await expect(page.locator('.grid').getByText("Grandma's Birthday Party")).not.toBeVisible();
-		await expect(page.locator('.grid').getByText('Family Vacation 2023')).toBeVisible();
-	});
-
-	test('shows excluded videos when toggle is checked', async ({ page }) => {
-		await mockVideos(page);
-		await page.goto('/');
-
-		await page.getByRole('checkbox', { name: /show work videos/i }).check();
-
-		await expect(page.locator('.grid').getByText("Grandma's Birthday Party")).toBeVisible();
-	});
-
-	test('shows all videos when no videos have excluded tags', async ({ page }) => {
-		const videosNoWork: object[] = sampleVideos.map((v) => ({
-			...v,
-			tags: (v.tags as readonly string[]).filter((t) => t !== 'work'),
-		}));
-		await mockVideos(page, videosNoWork);
-		await page.goto('/');
-
-		const cards = page.locator('.grid [role="button"]');
-		await expect(cards).toHaveCount(sampleVideos.length);
-	});
-});
-
-// ---------------------------------------------------------------------------
 // Search filtering
 // ---------------------------------------------------------------------------
 
@@ -199,9 +162,11 @@ test.describe('Gallery page — search', () => {
 	});
 
 	test('filters videos by playlist name', async ({ page }) => {
-		// "Birthdays" playlist only contains "Grandma's Birthday Party" but it's excluded by default
+		// Only "Grandma's Birthday Party" is in the "Birthdays" playlist
 		await page.getByPlaceholder('Search videos...').fill('Birthdays');
-		await expect(page.getByText('No videos found.')).toBeVisible();
+		const cards = page.locator('.grid [role="button"]');
+		await expect(cards).toHaveCount(1);
+		await expect(cards.first()).toContainText("Grandma's Birthday Party");
 	});
 
 	test('search is case-insensitive', async ({ page }) => {
@@ -217,12 +182,11 @@ test.describe('Gallery page — search', () => {
 	test('clears filter when search box is emptied', async ({ page }) => {
 		const searchBox = page.getByPlaceholder('Search videos...');
 		await searchBox.fill('vacation');
-		// Only non-excluded vacation videos visible
-		await expect(page.locator('.grid [role="button"]')).toHaveCount(1);
+		// The vacation video plus the birthday video that is also in "Vacations"
+		await expect(page.locator('.grid [role="button"]')).toHaveCount(2);
 
 		await searchBox.fill('');
-		// Back to all non-excluded videos (2 — birthdayVid2 still excluded)
-		await expect(page.locator('.grid [role="button"]')).toHaveCount(sampleVideos.length - 1);
+		await expect(page.locator('.grid [role="button"]')).toHaveCount(sampleVideos.length);
 	});
 });
 
@@ -251,28 +215,28 @@ test.describe('Gallery page — collection filter', () => {
 	}) => {
 		await page.getByRole('button', { name: 'Birthdays' }).click();
 
-		// birthdayVid2 is in Birthdays but is excluded (work tag) — no results
-		await expect(page.getByText('No videos found.')).toBeVisible();
-	});
-
-	test('Vacations collection shows only non-excluded videos by default', async ({ page }) => {
-		await page.getByRole('button', { name: 'Vacations' }).click();
-
-		// birthdayVid2 (work tag) is excluded; only vacationVid1 remains
 		const cards = page.locator('.grid [role="button"]');
 		await expect(cards).toHaveCount(1);
-		await expect(cards.first()).toContainText('Family Vacation 2023');
+		await expect(cards.first()).toContainText("Grandma's Birthday Party");
+	});
+
+	test('Vacations collection shows every video in that collection', async ({ page }) => {
+		await page.getByRole('button', { name: 'Vacations' }).click();
+
+		const cards = page.locator('.grid [role="button"]');
+		await expect(cards).toHaveCount(2);
+		await expect(page.locator('.grid').getByText('Family Vacation 2023')).toBeVisible();
+		await expect(page.locator('.grid').getByText("Grandma's Birthday Party")).toBeVisible();
 	});
 
 	test('clicking "All Videos" clears the collection filter', async ({ page }) => {
 		await page.getByRole('button', { name: 'Birthdays' }).click();
 		await page.getByRole('button', { name: 'All Videos' }).click();
-		// Back to non-excluded videos
-		await expect(page.locator('.grid [role="button"]')).toHaveCount(sampleVideos.length - 1);
+		await expect(page.locator('.grid [role="button"]')).toHaveCount(sampleVideos.length);
 	});
 
 	test('collection filter and search can be combined', async ({ page }) => {
-		// Filter to Vacations (1 non-excluded video), then search for "beach"
+		// Filter to Vacations (2 videos), then search for "beach"
 		await page.getByRole('button', { name: 'Vacations' }).click();
 		await page.getByPlaceholder('Search videos...').fill('beach');
 
@@ -420,8 +384,10 @@ test.describe('Video detail page', () => {
 	});
 
 	test('shows previous/next links and a "More from" row for the same collection', async ({ page }) => {
+		// Leave out the birthday video, which is also in "Vacations", so the
+		// collection is exactly the two vacation videos.
 		const videos = [
-			...sampleVideos,
+			...sampleVideos.filter((v) => v.id !== 'birthdayVid2'),
 			{
 				...sampleVideos[0],
 				id: 'vacationVid9',

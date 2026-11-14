@@ -1,5 +1,6 @@
 """
-Reads videos_full.json and playlists_full.json and writes a simplified videos.json.
+Reads videos_full.json and playlists_full.json and writes one simplified video
+list per site: videos.json for the default site, videos_<site>.json for the rest.
 See MAPPINGS.md for the full field mapping reference.
 """
 
@@ -13,6 +14,31 @@ VIDEOS_FULL_FILE = HERE / "videos_full.json"
 PLAYLISTS_FULL_FILE = HERE / "playlists_full.json"
 OUTPUT_FILE = HERE / "videos.json"
 PRIVATE_FILE = HERE / "videos_private.json"
+
+# Every video belongs to exactly one site, and each site gets its own output
+# file, so a site's published videos.json never lists another site's videos.
+DEFAULT_SITE = "family"
+# A video carrying any of these tags belongs to that site instead of the
+# default one. Tags are compared case-insensitively.
+SITE_TAGS = {
+    "sil": ["work"],
+}
+
+
+def site_for(tags):
+    """Return the site a video with these tags belongs to."""
+    lowered = {tag.lower() for tag in tags}
+    for site, site_tags in SITE_TAGS.items():
+        if lowered & {tag.lower() for tag in site_tags}:
+            return site
+    return DEFAULT_SITE
+
+
+def site_output_file(site):
+    """videos.json for the default site, videos_<site>.json for the others."""
+    if site == DEFAULT_SITE:
+        return OUTPUT_FILE
+    return OUTPUT_FILE.with_name(f"{OUTPUT_FILE.stem}_{site}{OUTPUT_FILE.suffix}")
 
 
 def build_membership_lookup(playlists_full):
@@ -66,6 +92,7 @@ def simplify_video(item, membership_lookup):
         "videoDate": recording.get("recordingDate"),
         "duration": format_duration(item.get("contentDetails", {}).get("duration")),
         "tags": snippet.get("tags", []),
+        "site": site_for(snippet.get("tags", [])),
         "privacyStatus": status["privacyStatus"],
         "thumbnails": {
             "high": high_thumb,
@@ -99,8 +126,11 @@ def main():
     public = [v for v in simplified if v["privacyStatus"] != "private"]
     private = [v for v in simplified if v["privacyStatus"] == "private"]
 
-    OUTPUT_FILE.write_text(json.dumps(public, indent=2))
-    print(f"Wrote {len(public)} videos → {OUTPUT_FILE}")
+    for site in [DEFAULT_SITE, *SITE_TAGS]:
+        site_videos = [v for v in public if v["site"] == site]
+        output_file = site_output_file(site)
+        output_file.write_text(json.dumps(site_videos, indent=2))
+        print(f"Wrote {len(site_videos)} {site} videos → {output_file}")
 
     PRIVATE_FILE.write_text(json.dumps(private, indent=2))
     print(f"Wrote {len(private)} private videos → {PRIVATE_FILE}")

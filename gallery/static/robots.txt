@@ -1,3 +1,5 @@
-# allow crawling everything by default
+# This is a private family site. Pages carry a "noindex" meta tag, which a
+# crawler only sees if it is allowed to fetch the page, so pages stay
+# crawlable and only the data file is blocked.
 User-agent: *
-Disallow:
+Disallow: /videos.json

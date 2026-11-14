@@ -27,4 +27,6 @@ export interface Video {
 	playlists: PlaylistRef[];
 	videoDate?: string;
 	duration?: string;
+	/** Which site the video belongs to; each site's videos.json holds only its own. */
+	site?: string;
 }

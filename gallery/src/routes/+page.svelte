@@ -3,7 +3,6 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import type { Video, PlaylistRef } from '$lib/types';
-	import { EXCLUDED_TAGS } from '$lib/config';
 	import { uploadYear, videoYear } from '$lib/dates';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import MemorySlot from '$lib/components/MemorySlot.svelte';
@@ -29,7 +28,6 @@
 	let density = $state<'large' | 'medium' | 'list'>(
 		(initParams.get('density') as 'large' | 'medium' | 'list') ?? 'medium'
 	);
-	let showExcluded = $state(initParams.get('showExcluded') === '1');
 	let sidebarOpen = $state(false);
 	let canSyncUrl = $state(false);
 
@@ -50,9 +48,6 @@
 		density !== 'medium'
 			? u.searchParams.set('density', density)
 			: u.searchParams.delete('density');
-		showExcluded
-			? u.searchParams.set('showExcluded', '1')
-			: u.searchParams.delete('showExcluded');
 		const next = `${u.pathname}${u.search}${u.hash}`;
 		const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
 		if (next !== current) {
@@ -66,7 +61,6 @@
 		selectedCollection;
 		sortBy;
 		density;
-		showExcluded;
 		syncUrl();
 	});
 
@@ -90,13 +84,8 @@
 		return counts;
 	});
 
-	const visibleVideos = $derived.by<Video[]>(() => {
-		if (showExcluded || EXCLUDED_TAGS.length === 0) return store.videos;
-		return store.videos.filter((v) => !v.tags.some((t) => EXCLUDED_TAGS.includes(t)));
-	});
-
 	const filteredVideos = $derived.by<Video[]>(() => {
-		let result = visibleVideos;
+		let result = store.videos;
 
 		if (selectedCollection) {
 			result = result.filter((v) => v.playlists.some((p) => p.title === selectedCollection));
@@ -181,7 +170,6 @@
 			{collections}
 			bind:selectedCollection
 			bind:sortBy
-			bind:showExcluded
 			{videoCounts}
 			totalCount={store.videos.length}
 		/>
@@ -245,7 +233,7 @@
 		<!-- Scrollable content -->
 		<div class="main-content flex-1 overflow-y-auto">
 			{#if showHero}
-				<MemorySlot videos={visibleVideos} />
+				<MemorySlot videos={store.videos} />
 			{/if}
 
 			<div class="p-4">

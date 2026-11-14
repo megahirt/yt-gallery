@@ -92,7 +92,8 @@ Uses `uv` for Python (3.14) and `npm` for the gallery.
 - Search filters across title, description, tags, and playlist names
 - Dates go through `src/lib/dates.ts`: `videoDate` is a calendar day stored as midnight UTC and must be formatted in UTC; `uploadDate` is shown in local time
 - `npm run sample-data` (`scripts/make-sample-data.mjs`) writes a made-up library to `static/sample/` (gitignored); `VITE_VIDEOS_PATH` points the store at it
-- `EXCLUDED_TAGS` in `config.ts` lists tags hidden by default; sidebar toggle to show them
+- Sites: every video belongs to one site (`site_for` / `SITE_TAGS` in `fetch/make_simple_video_list.py`; default `family`, tag `work` → `sil`). The pipeline writes `videos.json` for the default site and `videos_<site>.json` for the others, so a site's published data never lists another site's videos. The gallery shows everything in the file it is given; `VITE_SITE_NAME` / `VITE_SITE_SUBTITLE` override the name at build time
+- The site is kept out of search engines: `noindex` meta tag in `app.html`, and `static/robots.txt` blocks `/videos.json` (pages stay crawlable so the `noindex` is seen)
 
 ### CI/CD
 
@@ -109,9 +110,9 @@ Uses `uv` for Python (3.14) and `npm` for the gallery.
 
 ## Key Files
 
-- `gallery/src/lib/config.ts` — `SITE_NAME`, `SITE_SUBTITLE`, `EXCLUDED_TAGS`
+- `gallery/src/lib/config.ts` — `SITE_NAME`, `SITE_SUBTITLE` (overridable with `VITE_SITE_NAME` / `VITE_SITE_SUBTITLE`)
 - `gallery/src/lib/stores/videos.svelte.ts` — singleton video store
-- `gallery/src/lib/components/Sidebar.svelte` — collections, sort, excluded-tags toggle
+- `gallery/src/lib/components/Sidebar.svelte` — collections, sort
 - `gallery/src/lib/components/VideoCard.svelte` — `div[role="button"]` (NOT `<a>`), navigates to `/video/[id]`; shows thumbnail, title, date and duration only (tags and view counts live on the detail page)
 - `gallery/src/lib/components/MemorySlot.svelte` — featured video at the top of the home page ("On this day" match on `videoDate`, otherwise a random pick); hidden while searching or filtering by collection
 - `gallery/src/routes/video/[id]/+page.svelte` — detail page; previous/next and "More from" use the first collection with other videos, falling back to the same year
@@ -125,7 +126,7 @@ Uses `uv` for Python (3.14) and `npm` for the gallery.
 - For empty playlists in fixtures: `const x: object[] = sampleVideos.map(v => ({...v, playlists: []}))` .
 - Sidebar collections via `getByRole('button', { name: 'All Videos' })` / `name: 'Birthdays'`.
 - The featured memory at the top of the home page picks a random video, so look up card titles inside the grid (`page.locator('.grid').getByText(...)`), not page-wide.
-- `birthdayVid2` has the `work` tag and is excluded by default — tests that count all videos should use `sampleVideos.length - 1`.
+- `birthdayVid2` is in both the Birthdays and Vacations playlists.
 
 ## Project Management
 

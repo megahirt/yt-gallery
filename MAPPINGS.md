@@ -65,6 +65,7 @@ Produced by `make_simple_video_list.py` from `videos_full.json` + `playlists_ful
 | `videoDate` | `item["recordingDetails"]["recordingDate"]` | ISO 8601 datetime — when the video was filmed (set in YT Studio). `null` if not set |
 | `duration` | `item["contentDetails"]["duration"]` | Converted from ISO 8601 (`PT1H2M3S`) to `1:02:03` / `2:03`. `null` if absent |
 | `tags` | `item["snippet"]["tags"]` | Defaults to `[]` if absent |
+| `site` | — | Derived from the tags by `site_for`: `"sil"` if tagged `work`, otherwise `"family"`. Each site is written to its own file (`videos.json` for `family`, `videos_<site>.json` for the rest) |
 | `privacyStatus` | `item["status"]["privacyStatus"]` | `"public"`, `"unlisted"`, or `"private"` |
 | `thumbnails.high` | `item["snippet"]["thumbnails"]["high"]` | Object with `url`, `width`, `height` |
 | `thumbnails.standard` | `item["snippet"]["thumbnails"]["standard"]` | Falls back to `high` if `standard` is not present |
@@ -85,6 +86,7 @@ Produced by `make_simple_video_list.py` from `videos_full.json` + `playlists_ful
   "videoDate": "2024-02-14T00:00:00Z",
   "duration": "12:34",
   "tags": ["tutorial", "python"],
+  "site": "family",
   "privacyStatus": "public",
   "thumbnails": {
     "high": {"url": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg", "width": 480, "height": 360},

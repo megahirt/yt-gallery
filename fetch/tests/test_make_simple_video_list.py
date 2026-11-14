@@ -381,3 +381,58 @@ class TestDuration:
         raw = make_raw_video()
         raw.pop("contentDetails", None)
         assert simplify_video(raw, {})["duration"] is None
+
+
+# ---------------------------------------------------------------------------
+# Sites
+# ---------------------------------------------------------------------------
+
+class TestSites:
+    def test_untagged_video_belongs_to_default_site(self):
+        import make_simple_video_list as msl
+
+        assert msl.site_for([]) == msl.DEFAULT_SITE
+        assert msl.site_for(["family", "beach"]) == "family"
+
+    def test_work_tag_moves_video_to_sil_site(self):
+        import make_simple_video_list as msl
+
+        assert msl.site_for(["family", "work"]) == "sil"
+
+    def test_site_tags_are_case_insensitive(self):
+        import make_simple_video_list as msl
+
+        assert msl.site_for(["Work"]) == "sil"
+
+    def test_simplified_video_carries_its_site(self):
+        import make_simple_video_list as msl
+
+        video = msl.simplify_video(make_raw_video(tags=["work"], high_thumb=THUMB_HIGH), {})
+        assert video["site"] == "sil"
+
+    def test_main_writes_one_file_per_site(self, tmp_path, monkeypatch):
+        """Another site's videos must never end up in the default videos.json."""
+        import make_simple_video_list as msl
+
+        videos_full = [
+            make_raw_video(video_id="fam1", tags=["family"], high_thumb=THUMB_HIGH),
+            make_raw_video(video_id="sil1", tags=["work"], high_thumb=THUMB_HIGH),
+            make_raw_video(
+                video_id="silpriv", tags=["work"], privacy_status="private", high_thumb=THUMB_HIGH
+            ),
+        ]
+        (tmp_path / "videos_full.json").write_text(json.dumps(videos_full))
+        (tmp_path / "playlists_full.json").write_text(
+            json.dumps({"playlists": [], "memberships": []})
+        )
+        monkeypatch.setattr(msl, "VIDEOS_FULL_FILE", tmp_path / "videos_full.json")
+        monkeypatch.setattr(msl, "PLAYLISTS_FULL_FILE", tmp_path / "playlists_full.json")
+        monkeypatch.setattr(msl, "OUTPUT_FILE", tmp_path / "videos.json")
+        monkeypatch.setattr(msl, "PRIVATE_FILE", tmp_path / "videos_private.json")
+
+        msl.main()
+
+        family = json.loads((tmp_path / "videos.json").read_text())
+        sil = json.loads((tmp_path / "videos_sil.json").read_text())
+        assert [v["id"] for v in family] == ["fam1"]
+        assert [v["id"] for v in sil] == ["sil1"]

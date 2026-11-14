@@ -18,7 +18,7 @@ token_write.json
 videos_full.json
 playlists_full.json
 videos.json
-videos_private.json
+videos_*.json
 recording_dates.csv
 tags.csv
 

@@ -2,7 +2,6 @@
 	import { getContext } from 'svelte';
 	import { page } from '$app/state';
 	import type { Video } from '$lib/types';
-	import { EXCLUDED_TAGS } from '$lib/config';
 	import { formatFilmedDate, formatUploadDate, videoTime, videoYear } from '$lib/dates';
 	import VideoCard from '$lib/components/VideoCard.svelte';
 
@@ -26,7 +25,6 @@
 	);
 
 	const sortTime = videoTime;
-	const isExcluded = (v: Video) => v.tags.some((t) => EXCLUDED_TAGS.includes(t));
 
 	type Context = { label: string; href: string | null; videos: Video[] };
 
@@ -35,7 +33,7 @@
 	const context = $derived.by<Context | null>(() => {
 		const current = video;
 		if (!current) return null;
-		const pool = isExcluded(current) ? store.videos : store.videos.filter((v) => !isExcluded(v));
+		const pool = store.videos;
 		const oldestFirst = (vs: Video[]) => [...vs].sort((a, b) => sortTime(a) - sortTime(b));
 
 		for (const playlist of current.playlists) {
