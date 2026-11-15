@@ -35,3 +35,7 @@ site_review.html
 sil_videos.csv
 fetch/catalog/
 gallery/.live-data/
+fetch/media/
+fetch/media_download.log
+fetch/models/
+fetch/proposals/

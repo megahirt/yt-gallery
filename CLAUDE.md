@@ -26,6 +26,8 @@ uv run export_recording_dates.py # Export CSV for bulk-editing recording dates
 uv run set_recording_dates.py    # Push edited recording dates back to YouTube
 uv run export_tags.py            # Export CSV for bulk-editing tags
 uv run set_tags.py               # Push edited tags back to YouTube
+uv run download_media.py         # 360p copy of every video → media/ (gitignored; for analysis; needs yt-dlp + ffmpeg)
+uv run analyze_media.py --all    # Local AI proposals (Ollama + whisper.cpp) → proposals/ + proposals/index.html; tag list is catalog/tag_vocabulary.md (private)
 uv run pytest tests/             # Unit tests (mock all Google APIs)
 ```
 
