@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*'
+      - 'v[0-9]*'
 
 permissions:
   contents: read
@@ -45,7 +45,7 @@ jobs:
           if [ "${{ github.ref_type }}" = "tag" ]; then
             tag="${{ github.ref_name }}"
           else
-            tag="$(git tag -l 'v*' --sort=-v:refname | head -n 1)"
+            tag="$(git tag -l 'v[0-9]*' --sort=-v:refname | head -n 1)"
           fi
           if [ -z "$tag" ]; then
             echo "No v* tag found to build" >&2
